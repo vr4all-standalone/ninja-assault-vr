@@ -10,6 +10,7 @@
 	Copyright 2026 mikermak. This file is part of Flycast and is distributed under the GNU GPL v2 or later.
 */
 #include "xr_gun.h"
+#include "xr_theme.h"
 #include "xr_hands.h"
 #include "gun_model.h"
 #include "rend/gles/gles.h"
@@ -477,7 +478,7 @@ void drawGunGlow(const glm::mat4& viewProj, const glm::vec3& eyePos, const GunVi
 			glm::vec3 side = glm::cross(fwd, eyePos - muzzle);
 			side = glm::length(side) < 1e-6f ? glm::vec3(0.0008f, 0, 0) : glm::normalize(side) * 0.0008f;
 			// fades out along the way: it guides without painting over the scene
-			const glm::vec3 colour = gun.player == 1 ? glm::vec3(0.15f, 0.45f, 1.f) : glm::vec3(1.f, 0.08f, 0.05f);
+			const glm::vec3 colour = gun.menuPointer ? theme::Accent : gun.player == 1 ? glm::vec3(0.15f, 0.45f, 1.f) : glm::vec3(1.f, 0.08f, 0.05f);
 			const glm::vec4 start { colour, 0.55f }, end { colour, 0.f };
 			const glm::vec3 to = muzzle + fwd * std::min(len, 3.f);
 			const GlowVertex a { muzzle - side, start, {} }, b { muzzle + side, start, {} };
@@ -518,8 +519,8 @@ void drawGunGlow(const glm::mat4& viewProj, const glm::vec3& eyePos, const GunVi
 		else
 		{
 			const bool blue = gun.player == 1;
-			billboard(dots, gun.aimPoint, eyePos, size, blue ? glm::vec4(0.2f, 0.5f, 1.f, 0.95f) : glm::vec4(1.f, 0.12f, 0.06f, 0.95f));
-			billboard(dots, gun.aimPoint, eyePos, size * 0.4f, blue ? glm::vec4(0.75f, 0.9f, 1.f, 1.f) : glm::vec4(1.f, 0.85f, 0.7f, 1.f));
+			billboard(dots, gun.aimPoint, eyePos, size, gun.menuPointer ? glm::vec4(theme::Accent, 0.95f) : blue ? glm::vec4(0.2f, 0.5f, 1.f, 0.95f) : glm::vec4(1.f, 0.12f, 0.06f, 0.95f));
+			billboard(dots, gun.aimPoint, eyePos, size * 0.4f, gun.menuPointer ? glm::vec4(theme::Text, 1.f) : blue ? glm::vec4(0.75f, 0.9f, 1.f, 1.f) : glm::vec4(1.f, 0.85f, 0.7f, 1.f));
 		}
 	}
 

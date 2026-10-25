@@ -38,8 +38,8 @@ public class VrSetupActivity extends Activity
     /** The game picked here, for the VR activity (a path). */
     public static final String EXTRA_GAME = "hotd2vr.game";
 
-    private static final int RED = Color.rgb(217, 32, 26), TEXT = Color.rgb(230, 230, 230),
-            SOFT = Color.rgb(160, 160, 164), GOOD = Color.rgb(96, 200, 110), BACK = Color.rgb(18, 18, 20);
+    private static final int ACCENT = Color.rgb(169, 155, 255), TEXT = Color.rgb(230, 230, 230),
+            SOFT = Color.rgb(160, 160, 164), GOOD = Color.rgb(96, 200, 110), BACK = Color.rgb(21, 25, 35);
 
     private TextView accessStatus, gameStatus;
     private Button allow;
@@ -54,7 +54,7 @@ public class VrSetupActivity extends Activity
         page.setPadding(dp(36), dp(28), dp(36), dp(28));
         page.setBackgroundColor(BACK);
 
-        TextView title = text("VR LIGHT GUN HUB", 28, RED);
+        TextView title = text("VR LIGHT GUN HUB", 28, ACCENT);
         title.setTypeface(Typeface.DEFAULT_BOLD);
         page.addView(title);
         page.addView(text("Two steps before the first game.", 17, SOFT), spaced(4));
@@ -136,7 +136,7 @@ public class VrSetupActivity extends Activity
             else if (!access)
                 how += " Then allow the access above.";
             gameStatus.setText(how);
-            gameStatus.setTextColor(scan.incomplete != null || scan.archive != null ? RED : SOFT);
+            gameStatus.setTextColor(scan.incomplete != null || scan.archive != null ? ACCENT : SOFT);
         }
         games.removeAllViews();
         for (VrGames.Game g : scan.games)
@@ -225,7 +225,7 @@ public class VrSetupActivity extends Activity
         b.setGravity(Gravity.CENTER);
         b.setPadding(dp(28), dp(8), dp(28), dp(8));
         GradientDrawable shape = new GradientDrawable();
-        shape.setColor(RED);
+        shape.setColor(ACCENT);
         shape.setCornerRadius(dp(8));
         b.setBackground(shape);
         return b;

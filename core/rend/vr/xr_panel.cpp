@@ -7,6 +7,7 @@
 	Copyright 2026 mikermak. This file is part of Flycast and is distributed under the GNU GPL v2 or later.
 */
 #include "xr_panel.h"
+#include <stb_image.h>
 #include "rend/gles/gles.h"
 #include "rend/gles/glcache.h"
 #include "oslib/resources.h"
@@ -111,9 +112,9 @@ void fill(int x0, int y0, int x1, int y1, const glm::vec3& colour, float alpha =
 			blend(x, y, colour, alpha);
 }
 
-// A new picture: the dark background and a thin red frame, like the game's own (or a panel's colours).
-void background(int width, int height, const glm::vec3& back = glm::vec3(16 / 255.f, 15 / 255.f, 17 / 255.f),
-		const glm::vec3& frame = glm::vec3(0.62f, 0.06f, 0.06f))
+// A new picture in the shared purple VR4ALL theme.
+void background(int width, int height, const glm::vec3& back = theme::Background,
+		const glm::vec3& frame = theme::Accent)
 {
 	canvasWidth = width;
 	canvasHeight = height;
@@ -178,6 +179,28 @@ void text(const std::string& s, float px, float x, int y, const glm::vec3& colou
 
 void paint(const Panel& panel)
 {
+	if (panel.brand)
+	{
+		size_t size = 0;
+		auto image = resource::load("picture/vr4all-splash.png", size);
+		int w = 0, h = 0, channels = 0;
+		stbi_set_flip_vertically_on_load_thread(0);
+		u8 *decoded = image ? stbi_load_from_memory(image.get(), (int)size, &w, &h, &channels, 4) : nullptr;
+		if (decoded != nullptr && w == Width && h == Height)
+		{
+			canvasWidth = w;
+			canvasHeight = h;
+			pixels.assign(decoded, decoded + (size_t)w * h * 4);
+			stbi_image_free(decoded);
+			return;
+		}
+		stbi_image_free(decoded);
+		WARN_LOG(RENDERER, "XR: splash image unavailable, using VR4ALL text");
+		background(Width, Height);
+		text("VR4ALL", 104.f, Width * 0.5f, 245, theme::Text);
+		text("STANDALONE VR / PC VR", 30.f, Width * 0.5f, 310, theme::Accent);
+		return;
+	}
 	background(Width, Height, panel.back, panel.frame);
 	float total = 0.f;
 	for (const PanelLine& line : panel.lines)
@@ -217,9 +240,9 @@ void paintLabel(const std::string& s, float px, const glm::vec3& colour)
 			const float cy = std::clamp(y + 0.5f, radius, canvasHeight - radius);
 			const float inside = std::clamp(radius + 0.5f - std::hypot(x + 0.5f - cx, y + 0.5f - cy), 0.f, 1.f);
 			u8 *p = &pixels[((size_t)y * canvasWidth + x) * 4];
-			p[0] = 16;
-			p[1] = 15;
-			p[2] = 17;
+			p[0] = (u8)(theme::Background.r * 255.f);
+			p[1] = (u8)(theme::Background.g * 255.f);
+			p[2] = (u8)(theme::Background.b * 255.f);
 			p[3] = (u8)std::lround(225.f * inside);
 		}
 	// (capitals in the middle, as the rows panel puts them)
@@ -235,10 +258,10 @@ void paintRows(const RowsPanel& panel)
 {
 	const int w = RowsWidth, h = rowsHeight(panel);
 	background(w, h);
-	const glm::vec3 red(0.86f, 0.13f, 0.1f), white(0.92f), grey(0.62f), dim(0.42f), rule(0.3f, 0.09f, 0.08f);
+	const glm::vec3 &accent = theme::Accent, &white = theme::Text, &grey = theme::Muted, &dim = theme::Dim, &rule = theme::Line;
 	// the baseline that puts capitals this size in the middle of a band
 	auto baseline = [](float middle, float px) { return (int)std::lround(middle + px * 0.3f); };
-	text(panel.title, 50.f, w * 0.5f, baseline(TitleBand * 0.5f + 2.f, 50.f), red);
+	text(panel.title, 50.f, w * 0.5f, baseline(TitleBand * 0.5f + 2.f, 50.f), accent);
 	fill(40, TitleBand - 3, w - 40, TitleBand - 1, rule);
 	for (size_t i = 0; i < panel.rows.size(); i++)
 	{
@@ -247,14 +270,14 @@ void paintRows(const RowsPanel& panel)
 		const float middle = top + RowHeight * 0.5f;
 		if (row.selected)
 		{
-			fill(12, top + 4, w - 12, top + RowHeight - 4, glm::vec3(0.36f, 0.09f, 0.08f), 0.85f);
-			fill(12, top + 4, 20, top + RowHeight - 4, red);
+			fill(12, top + 4, w - 12, top + RowHeight - 4, theme::Selection, 0.85f);
+			fill(12, top + 4, 20, top + RowHeight - 4, accent);
 		}
 		const glm::vec3 labelColour = row.dim ? dim : white;
 		const glm::vec3 valueColour = row.dim ? dim : row.selected ? white : grey;
 		if (row.stepper)
 		{
-			const glm::vec3 sign = row.dim ? dim : row.selected ? red : grey;
+			const glm::vec3 sign = row.dim ? dim : row.selected ? accent : grey;
 			text("-", 48.f, 44.f, baseline(middle, 48.f), sign);
 			text("+", 48.f, w - 44.f, baseline(middle, 48.f), sign);
 		}
@@ -383,7 +406,7 @@ void drawPanel(const glm::mat4& viewProj, const Panel& panel)
 	if (!loadFont() || !initGl())
 		return;
 	// what it says, the bar in steps of half a percent
-	std::string says;
+	std::string says = panel.brand ? "VR4ALL SPLASH\n" : "";
 	for (const PanelLine& line : panel.lines)
 		says += line.text + '\n';
 	says += panel.footer + '\n' + std::to_string(panel.progress < 0.f ? -1 : (int)(panel.progress * 200.f))

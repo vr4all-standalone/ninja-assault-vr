@@ -65,6 +65,7 @@ struct GunView
 	double now = 0.0;			// seconds, any steady clock (smoke drifts with it)
 	float sinceShot = 1e9f;		// seconds since the last shot
 	unsigned shot = 0;			// counts shots: each looks a bit different
+	bool menuPointer = false; // purple UI pointer; gameplay keeps its player color
 	bool aimLine = false;		// draw the line from the muzzle to the aim point
 	bool aimDot = false;		// draw the dot at the aim point
 	bool aimOutside = false;	// ...greyed: the game can't hit there (outside its own view)

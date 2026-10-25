@@ -20,6 +20,7 @@
 #include "xr_labels.h"
 #include "xr_menu.h"
 #include "xr_panel.h"
+#include "vr4all_splash.h"
 #include "xr_sim.h"
 #include "xr_own.h"
 #include "hands_rip.h"
@@ -239,11 +240,14 @@ XrTime leftHoldSince;
 bool leftHoldMenu;
 XrTime leftTapUntil;
 // A game (re)started: one gun again (EventManager calls on the emulator's thread).
+std::atomic<bool> splashReset { true };
+LaunchSplash launchSplash;
+bool splashVisible;
 std::atomic<bool> newGame;
 struct NewGameRegistration
 {
 	NewGameRegistration() {
-		EventManager::listen(Event::Start, [](Event, void *) { newGame = true; });
+		EventManager::listen(Event::Start, [](Event, void *) { newGame = true; splashReset = true; });
 	}
 } newGameRegistration;
 // How to play: the hands that hold their controllers show them, with the labels: before the game's
@@ -1660,6 +1664,7 @@ void updateGun(Gun& g, XrTime time, const XrSpaceLocation *locations, const bool
 		view.sinceShot = sinceShot;
 		view.shot = g.shotCount;
 		view.player = g.player;
+		view.menuPointer = false;
 		view.aimLine = config::VrLaser;
 		view.aimDot = config::VrLaser && (onScreen || aimOutside);
 		view.aimOutside = aimOutside && !onScreen;
@@ -2015,6 +2020,7 @@ void updateMenu(XrTime time, bool menuEdge, bool skip, bool skipEdge)
 			view.player = guns[0].player;
 			pointerShown[hand] = true;
 		}
+		view.menuPointer = true;
 		view.aimLine = true;
 		view.aimDot = onPanel;
 		view.aimOutside = false;
@@ -2937,6 +2943,12 @@ bool frame()
 		return false;
 	}
 
+	if (splashReset.exchange(false))
+	{
+		launchSplash.reset();
+		NOTICE_LOG(RENDERER, "XR: VR4ALL splash started (3 visible seconds)");
+	}
+	splashVisible = launchSplash.active();
 	// Let through whatever the emulator produced since the last headset frame. While it runs
 	// the game to its game over scene for the agent's hands (hands_rip.h), or its attract demo
 	// for the hero's staff, it goes as fast as it can: it waits for each of its frames to be
@@ -2966,7 +2978,6 @@ bool frame()
 		doneUntil = std::chrono::steady_clock::now() + std::chrono::milliseconds(3000);
 	wasPreparing = preparing;
 	Panel panel;
-	const glm::vec3 red(0.86f, 0.13f, 0.1f), white(0.92f), grey(0.66f);
 	const hands::Source *source = gameModelSource();
 	const bool staff = source != nullptr && source->kind == hands::Source::HerosStaff;
 	const bool cmGuns = source != nullptr && source->kind == hands::Source::CmGuns;
@@ -2975,16 +2986,7 @@ bool frame()
 	const bool attractGun = lupinGun || ninjaGun;
 	const bool gunModels = cmGuns || attractGun;
 	const char *title = ninjaGun ? "NINJA ASSAULT VR" : lupinGun ? "LUPIN THE THIRD VR" : cmGuns ? "CONFIDENTIAL MISSION VR" : staff ? "THE MAZE OF THE KINGS VR" : "THE HOUSE OF THE DEAD 2 VR";
-	// CM VR 1.2: Confidential Mission's panels in its start screen's colours (VR4All's: the panel, its
-	// line, violet, cream, muted grey, lime)
-	const glm::vec3 violet(169 / 255.f, 155 / 255.f, 1.f), cream(248 / 255.f, 245 / 255.f, 239 / 255.f), muted(155 / 255.f, 165 / 255.f, 180 / 255.f);
-	if (gunModels)
-	{
-		panel.back = glm::vec3(21 / 255.f, 25 / 255.f, 35 / 255.f);
-		panel.frame = panel.barTrack = glm::vec3(52 / 255.f, 57 / 255.f, 71 / 255.f);
-		panel.barFill = glm::vec3(217 / 255.f, 243 / 255.f, 108 / 255.f);
-		panel.footerColour = muted;
-	}
+	const glm::vec3 &violet = theme::Accent, &cream = theme::Text, &muted = theme::Muted;
 	if (preparing && gunModels)
 	{
 		panel.lines = {
@@ -3008,24 +3010,29 @@ bool frame()
 	else if (preparing)
 	{
 		panel.lines = {
-			{ title, 0.085f, red },
-			{ "", 0.03f, white },
-			{ staff ? "Making the hero's staff from your game" : "Taking the agent's hands and pistol from your game", 0.064f, white },
+			{ title, 0.085f, violet },
+			{ "", 0.03f, cream },
+			{ staff ? "Making the hero's staff from your game" : "Taking the agent's hands and pistol from your game", 0.064f, cream },
 			{ staff ? "Only this once: the game plays its attract demo by itself, fast."
-					: "Only this once: the game plays itself to its game over, fast.", 0.047f, grey },
+					: "Only this once: the game plays itself to its game over, fast.", 0.047f, muted },
 		};
 		panel.progress = hands::prepProgress();
 		panel.footer = "B: skip it for now (the arcade gun this time)";
 	}
 	else if (std::chrono::steady_clock::now() < doneUntil)
 		panel.lines = {
-			{ title, 0.085f, red },
-			{ "", 0.03f, white },
-			{ staff ? "Got it. The hero's staff is yours." : "Got them. The agent's hands are yours.", 0.064f, white },
+			{ title, 0.085f, violet },
+			{ "", 0.03f, cream },
+			{ staff ? "Got it. The hero's staff is yours." : "Got them. The agent's hands are yours.", 0.064f, cream },
 			{ staff ? "Reload: point it away from the screen and pull the trigger."
-					: "Reload: grab the back of the pistol with your other hand and pull.", 0.047f, grey },
+					: "Reload: grab the back of the pistol with your other hand and pull.", 0.047f, muted },
 		};
-	const bool showPanel = !panel.lines.empty();
+	if (splashVisible)
+	{
+		panel = Panel();
+		panel.brand = true;
+	}
+	const bool showPanel = panel.brand || !panel.lines.empty();
 	// What the panel says, in the log each time it changes: the lines under the title, and the footer
 	static std::string panelSaid;
 	std::string said;
@@ -3095,7 +3102,8 @@ bool frame()
 				views[1].fov.angleLeft * deg, views[1].fov.angleRight * deg, views[1].fov.angleUp * deg, views[1].fov.angleDown * deg,
 				chains[0].width, chains[0].height, worldScale(), (float)config::ExtraDepthScale);
 	}
-	updateLightgun(frameState.predictedDisplayTime);
+	if (!splashVisible)
+		updateLightgun(frameState.predictedDisplayTime);
 	retryControllerModels();
 	updateControllers(frameState.predictedDisplayTime);
 	noteDrawn();
@@ -3244,7 +3252,13 @@ bool frame()
 	endInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
 	endInfo.layerCount = render && ok ? 1 : 0;
 	endInfo.layers = layers;
-	XRCHECK(XR(xrEndFrame)(session, &endInfo));
+	const bool submitted = XRCHECK(XR(xrEndFrame)(session, &endInfo));
+	if (submitted && render && ok && focused && splashVisible)
+	{
+		launchSplash.presented(std::chrono::nanoseconds(frameState.predictedDisplayPeriod));
+		if (!launchSplash.active())
+			NOTICE_LOG(RENDERER, "XR: VR4ALL splash finished");
+	}
 	return render && ok;
 }
 

@@ -23,7 +23,8 @@ cmrc_add_resources(flycast-resources
         resources/flash/unomedal.nvmem.zip	# debug: comm and all errors disabled
         resources/flash/westdrmg.nvmem.zip	# debug: comm and all errors disabled
         resources/flash/smarinef.nvmem.zip	# standard cabinet
-        resources/picture/f355_print_template.png)
+        resources/picture/f355_print_template.png
+        resources/picture/vr4all-splash.png)
 
 cmrc_add_resources(flycast-resources
         fonts/printer_ascii8x16.bin.zip
