@@ -33,7 +33,7 @@ revision guards are validated. No disc image, PIC key or separate track folder i
 
 ## Controllers and menu
 
-Single-player defaults remain A Start, B Reload, X P2 Start/join and Y P2 Reload. Either trigger
+Single-player defaults remain A Start, B Reload, X P2 Start/join and Y Reload (P1). Either trigger
 can shoot and transfer P1's single gun before P2 joins. Native free play uses Start directly;
 there is no separate coin action.
 

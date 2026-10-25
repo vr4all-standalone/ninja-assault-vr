@@ -85,7 +85,7 @@ $ErrorActionPreference = 'Stop'
 if (-not $Name -or $Name -match '^\.+$|\.\.|[\\/:*?\[\]]') { throw "-Name '$Name': want a plain folder name" }
 $repo = Split-Path -Parent $PSScriptRoot
 $buildExe = Join-Path $repo 'build-win\flycast.exe'
-$exe = Join-Path $repo 'build-win\lupin-vr-player.exe'
+$exe = Join-Path $repo 'build-win\ninja-vr-player.exe'
 if (-not (Test-Path -LiteralPath $buildExe)) { throw 'Build the Windows version first: hotd2-vr\build-win.cmd' }
 # A distinct name also protects this run from older external harnesses that stop every flycast.exe.
 Copy-Item -LiteralPath $buildExe -Destination $exe -Force

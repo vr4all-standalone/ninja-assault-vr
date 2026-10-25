@@ -104,6 +104,8 @@ const hands::Source *gameModelSource();
 bool gameGunMenu();
 // The game reloads from the analog off-screen sensor even with no trigger (Lupin).
 bool gameAnalogOffscreenReload();
+// B/Y uses a bounded off-screen reload pulse for analog and Namco screen-position games.
+bool gameManualOffscreenReload();
 // Wait for the native accepted-shot counter before classifying an empty pull.
 int gunShotWaitMs();
 // Intended 640x480 game pixels -> cabinet ADC coordinates, inverse of live calibration.
@@ -129,6 +131,8 @@ bool player2Prompting();
 bool cutscene();
 // Metres per game unit: vr.WorldScale, times the game profile's unit size next to HOTD2's.
 float worldScale();
+// Panel distance converted from reference units into this game's world units.
+float panelDepth();
 // ...the profile knows that picture (else player 2 can't be told out again).
 bool player2PromptKnown();
 

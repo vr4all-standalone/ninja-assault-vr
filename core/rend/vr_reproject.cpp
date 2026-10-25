@@ -31,6 +31,9 @@
 #include <vector>
 #include <array>
 #include "rend/vr/gun_calibration.h"
+#include "rend/vr/ninja_calibration.h"
+#include "rend/vr/ninja_state.h"
+#include "rend/vr/panel_units.h"
 
 namespace vr
 {
@@ -236,6 +239,7 @@ struct GameProfile
 	struct StockLens {
 		u32 descriptors = 0, index = 0, width = 0;
 		u16 stride = 0, angleOffset = 0, count = 0;
+		bool pointerIndex = false;
 		CodeGuard guards[12] {};
 	} stockLens;
 	float focal = 0.f;
@@ -294,6 +298,8 @@ struct GameProfile
 	hands::Source model {};
 	// Reusable VR gun choices can be available before this game has a captured pistol.
 	bool gunMenu = false;
+	bool ninja = false;
+	CodeGuard revisionGuards[12] {};
 	bool analogOffscreenReload = false, movieCutscenes = false, p2PromptSinglePlayerOnly = false;
 	u32 calibrationAddr = 0, calibrationMode = 0;
 	std::array<CodeGuard, 32> calibrationGuards {};
@@ -309,7 +315,8 @@ struct GameProfile
 		// Float-valued VM variables instead of the byte/u16 block (original Lupin).
 		bool floats = false; u32 session = 0, active = 0;
 		int shotWaitMs = 100;
-		CodeGuard guards[6] {};
+		u32 magazineAddr=0, combatAddr=0, ringAddr=0;
+		CodeGuard guards[32] {};
 	} gunRam;
 };
 
@@ -669,7 +676,69 @@ static std::vector<GameProfile> makeProfiles()
 	p.model.guns[1] = { "in-game pistol", "gun-lp-pistol.bin", { 0xb80800 }, 24, 24, 0.22f, true,
 			{ 24 }, 12, { 1.f, 0.52442f, 0.08799f }, 0.05f, 0.f, 0.2f };
 	list.push_back(p);
-	return list;
+
+ // Ninja Assault, World NJA2 Ver.A. Private baseline and freeplay captures.
+ p = GameProfile();
+ p.gameId = "NINJA ASSAULT"; p.ninja = true; p.gunMenu = true;
+ p.projAddr = 0x0E0600; p.viewportAddr = 0x0E0728;
+ p.focal = 718.744f; p.fovScale = 2.f;
+ // Main perspective setter: full angle in r4, halved at 08F8C8 before sin/tan.
+ // Keep the full angle for drawing/frustum; the camera record remains original.
+ p.fovPatch[0] = { 0x08F8C8, 0x4D21, 0x0009 };
+ p.fovPatch[1] = { 0x08F8A0, 0x2FE6, 0x2FE6 };
+ p.fovPatch[2] = { 0x08F8C4, 0x5DF1, 0x5DF1 };
+ p.fovPatch[3] = { 0x08F8CA, 0x4B0B, 0x4B0B };
+ p.fovPatch[4] = { 0x08F9D4, 0xC560, 0xC560 };
+ p.fovPatch[5] = { 0x08F9D6, 0x0C08, 0x0C08 };
+ p.stockLens.descriptors = 0x385818; p.stockLens.index = 0x3860F4;
+ p.stockLens.pointerIndex = true; p.stockLens.width = 0x0AD0A8;
+ p.stockLens.stride = 252; p.stockLens.angleOffset = 236; p.stockLens.count = 9;
+ p.stockLens.guards[0] = { 0x10685A, 0x910B };
+ p.stockLens.guards[1] = { 0x106862, 0x041A };
+ p.stockLens.guards[2] = { 0x106868, 0x2242 };
+ p.stockLens.guards[3] = { 0x106894, 0x5818 };
+ p.stockLens.guards[4] = { 0x106896, 0x0C38 };
+ p.stockLens.guards[5] = { 0x1068A0, 0x60F4 };
+ p.stockLens.guards[6] = { 0x1068A2, 0x0C38 };
+ p.hudW = 1.f / 1024.f; p.snapMinW = .0009f; p.snapMaxW = .01f;
+ p.snapStep = 1.f / 65536.f; p.offScreen2DMaxW = .01f;
+ p.farOutBelowW = .997f; p.flatScreens = true; p.unitScale = .01f;
+ p.noShotFlash = true;
+ p.calibrationAddr = 0x22C548;
+ p.calibrationGuards[0] = { 0x1300B2, 0xD32C };
+ p.calibrationGuards[1] = { 0x1300BC, 0x6242 };
+ p.calibrationGuards[2] = { 0x1300BE, 0x0027 };
+ p.calibrationGuards[3] = { 0x1300C0, 0x5242 };
+ p.calibrationGuards[4] = { 0x1300C8, 0x420B };
+ p.calibrationGuards[5] = { 0x1300D0, 0x5241 };
+ p.calibrationGuards[6] = { 0x1300D2, 0x0027 };
+ p.calibrationGuards[7] = { 0x130164, 0xC548 };
+ p.calibrationGuards[8] = { 0x130166, 0x0C22 };
+ p.revisionGuards[0] = { 0x15C8C0, 0xD128 };
+ p.revisionGuards[1] = { 0x15C8C8, 0x6312 };
+ p.revisionGuards[2] = { 0x15C8CA, 0x2338 };
+ p.revisionGuards[3] = { 0x15C8D4, 0xD323 };
+ p.revisionGuards[4] = { 0x15C8D6, 0x6232 };
+ p.revisionGuards[5] = { 0x15C8D8, 0x2228 };
+ p.revisionGuards[6] = { 0x15C964, 0x62AC };
+ p.revisionGuards[7] = { 0x15C966, 0x0C3B };
+ p.gunRam.base = 0x3869BC; p.gunRam.stride = 0x30;
+ p.gunRam.magazineAddr = 0x386A30; p.gunRam.combatAddr = 0x3E6978; p.gunRam.ringAddr = 0x481338;
+ p.gunRam.shotWaitMs = 200;
+ const CodeGuard ninjaGuards[] {
+  {0x0FAA72,0xD568},{0x0FAA7E,0xE074},{0x0FAA82,0x005D},{0x0FAA8A,0x8144},
+  {0x0FAB94,0x8524},{0x0FAB96,0x70FF},{0x0FAB98,0x8124},
+  {0x0FB5AA,0x8441},{0x0FB5AC,0x8801},
+  {0x0F9554,0xD33F},{0x0F9556,0x6231},{0x0F9558,0x2228},
+  {0x15D0A2,0x6102},{0x15D0A6,0x331C},{0x15D0A8,0x2359},{0x15D0AC,0x2032},
+  {0x0FAC14,0x69BC},{0x0FAC16,0x0C38},{0x0F9654,0x6978},{0x0F9656,0x0C3E},
+  {0x15D0FC,0x1338},{0x15D0FE,0x0C48},{0x15D100,0x133C},{0x15D102,0x0C48}
+ };
+ std::copy(std::begin(ninjaGuards),std::end(ninjaGuards),std::begin(p.gunRam.guards));
+ // Native operator free play flag. Original EEPROM and ROM files are untouched.
+ p.pokes[0] = { 0x3B62AC, 1 };
+ list.push_back(p);
+ return list;
 }
 static const std::vector<GameProfile> profiles = makeProfiles();
 static const GameProfile *activeProfile;	// the game being played (or none)
@@ -709,6 +778,8 @@ int gunShotWaitMs() {
 	return activeProfile != nullptr ? activeProfile->gunRam.shotWaitMs : 100;
 }
 
+bool gameManualOffscreenReload() { return activeProfile != nullptr && (activeProfile->analogOffscreenReload || activeProfile->ninja); }
+
 bool gameAnalogOffscreenReload() {
 	return activeProfile != nullptr && activeProfile->analogOffscreenReload;
 }
@@ -725,6 +796,21 @@ void calibrateGunInput(int player, int& x, int& y)
 	for (const CodeGuard& g : prof->calibrationGuards)
 		if (g.offset != 0 && ReadMem16_nommu(0x8C000000u + g.offset) != g.expected) return;
 	if (prof->calibrationMode != 0 && ReadMem32_nommu(0x8C000000u + prof->calibrationMode) != 1) return;
+ if (prof->ninja) {
+  s32 values[4];
+  for (int k=0;k<4;k++) values[k]=(s32)ReadMem32_nommu(0x8C000000u + prof->calibrationAddr + player*16+k*4);
+  struct NinjaCache { bool ready=false; s32 values[4] {}; int x[640],y[480]; };
+  static NinjaCache cached[2]; static std::mutex ninjaMutex;
+  std::lock_guard<std::mutex> lock(ninjaMutex); auto& map=cached[player];
+  if (!map.ready || memcmp(map.values,values,sizeof(values)) != 0) {
+   map.ready = ninjaCalibrationInverse(640,{values[0],values[2]},map.x)
+       && ninjaCalibrationInverse(480,{values[1],values[3]},map.y);
+   if (!map.ready) return;
+   memcpy(map.values,values,sizeof(values));
+   NOTICE_LOG(RENDERER,"VR: P%d Namco calibration inverse %d,%d,%d,%d (EEPROM unchanged)",player+1,values[0],values[1],values[2],values[3]);
+  }
+  x=map.x[x]; y=map.y[y]; return;
+ }
 	u8 values[6];
 	for (int k = 0; k < 6; k++) values[k] = ReadMem8_nommu(0x8C000000u + prof->calibrationAddr + player * 6 + k);
 	const GunAxisCalibration ax { values[0], values[1], values[4] }, ay { values[2], values[3], values[5] };
@@ -753,6 +839,7 @@ static std::mutex gunMutex;
 static GunState gunSnaps[2];
 static std::atomic<u8> vmPlayers { 0 };
 static std::atomic<bool> vmPlayersKnown { false };
+static std::atomic<bool> ninjaStory { false };
 
 static void applyGameProfile(Event, void *)
 {
@@ -765,6 +852,7 @@ static void applyGameProfile(Event, void *)
 	}
 	vmPlayers = 0;
 	vmPlayersKnown = false;
+	ninjaStory = false;
 	activeProfile = nullptr;
 	// Online (GGPO), what the VR mod writes into a game it has a profile for must be the
 	// same on both sides, whatever each player's settings or machine (a Quest, PCVR, a PC
@@ -840,6 +928,8 @@ static bool widensByCode() {
 // The code a profile's patch and pokes are for is in RAM: every patched word stock or patched.
 static bool profileCodeThere(const GameProfile& prof)
 {
+ for (const CodeGuard& g : prof.revisionGuards)
+  if (g.offset && ReadMem16_nommu(0x8C000000u + g.offset) != g.expected) return false;
 	if (prof.fovPatch[0].offset == 0)
 		return true;
 	for (const CodePatch& c : prof.fovPatch)
@@ -949,6 +1039,44 @@ static bool vmCount(u32 addr, u32 maximum, u32& value)
 static void snapGuns(Event, void *)
 {
 	const GameProfile *prof = activeProfile;
+ if (prof != nullptr && prof->ninja) {
+  bool guarded=profileCodeThere(*prof);
+  for (const CodeGuard& g:prof->gunRam.guards)
+   guarded=guarded && (!g.offset || ReadMem16_nommu(0x8C000000u+g.offset)==g.expected);
+  static NinjaGunTracker tracker[2];
+  u8 players=0; bool story=false;
+  const auto& ram=prof->gunRam;
+  const u32 combat=guarded?ReadMem16_nommu(0x8C000000u+ram.combatAddr):0;
+  const u32 magazine=guarded?ReadMem16_nommu(0x8C000000u+ram.magazineAddr):0;
+  for (int player=0;player<2;player++) {
+   const u32 block=gunBlock(prof,player);
+   NinjaGunSample sample {};
+   sample.codeValid=guarded;
+   if (guarded) {
+    sample.slot=ReadMem8_nommu(block); sample.lifecycle=ReadMem8_nommu(block+1);
+    sample.active=ReadMem8_nommu(block+2); sample.ammo=ReadMem16_nommu(block+8);
+    sample.magazine=magazine; sample.ring=(s32)ReadMem32_nommu(0x8C000000u+ram.ringAddr+4*player);
+    sample.combat=combat;
+   }
+   const auto native=updateNinjaGun(tracker[player],sample);
+   // Lifecycle 3 is a real pending join during a story: retain dual mode while
+   // native gameplay waits, but never treat it as a round or an active gun.
+   if (native.inGame || (guarded && sample.slot==1 && sample.lifecycle==3)) players|=1<<player;
+   story=story || (native.inGame && combat==0);
+   GunState now {}; now.valid=native.valid; now.ammo=(u8)native.ammo;
+   now.magazine=(u8)native.magazine; now.shots=native.shots; now.fired=native.fired;
+   std::lock_guard<std::mutex> lock(gunMutex);
+   const auto was=gunSnaps[player];
+   if (now.valid && !was.valid) NOTICE_LOG(RENDERER,"VR: P%d magazine 0 -> %d",player+1,now.magazine);
+   if (now.fired!=was.fired) NOTICE_LOG(RENDERER,"VR: P%d accepted round %u ammo %u",player+1,now.fired,now.ammo);
+   gunSnaps[player]=now;
+  }
+  const auto was=vmPlayers.exchange(players); vmPlayersKnown=guarded;
+  for(int player=0;player<2;player++) if (((was^players)>>player)&1)
+   NOTICE_LOG(RENDERER,"VR: P%d active %s",player+1,((players>>player)&1)?"on":"off");
+  if(ninjaStory.exchange(story)!=story) NOTICE_LOG(RENDERER,"VR: cutscene %s",story?"on":"off");
+  return;
+ }
 	u8 enabled = 0;
 	bool vmValid = prof != nullptr && prof->gunRam.floats;
 	if (vmValid)
@@ -1221,6 +1349,12 @@ float worldScale()
 	return config::VrWorldScale * (prof != nullptr ? prof->unitScale : 1.f);
 }
 
+// The panel setting is in reference-game units, independently of the game's
+// own world-unit size. Renderers and ray tests must use this same conversion.
+float panelDepth() {
+ return panelDepthInGameUnits(config::VrHudDepth,activeProfile ? activeProfile->unitScale : 1.f);
+}
+
 // The stock focal length the game's light-gun hit test uses, in DC pixels.
 static float stockFocal()
 {
@@ -1231,7 +1365,14 @@ static float stockFocal()
 		bool guarded = true;
 		for (const CodeGuard& g : lens.guards)
 			guarded = guarded && (g.offset == 0 || ReadMem16_nommu(0x8C000000u + g.offset) == g.expected);
-		const u32 index = ReadMem32_nommu(0x8C000000u + lens.index);
+		u32 index = ReadMem32_nommu(0x8C000000u + lens.index);
+  if (lens.pointerIndex) {
+   const u32 offset = index & 0x01FFFFFFu;
+   const bool inRam = (index & 0x1E000000u) == 0x0C000000u;
+   guarded = guarded && inRam && lens.stride && offset >= lens.descriptors
+       && (offset - lens.descriptors) % lens.stride == 0;
+   index = guarded ? (offset - lens.descriptors) / lens.stride : lens.count;
+  }
 		if (guarded && index < lens.count)
 		{
 			const u32 angle = ReadMem32_nommu(0x8C000000u + lens.descriptors + index * lens.stride + lens.angleOffset);
@@ -1405,8 +1546,7 @@ static void snapNear2D(rend_context& ctx, const std::vector<PolyParam>& list, u3
 		if (i != pp.first + pp.count)
 			continue;	// not flat, or not on the screen: 3D
 		// one linear scale per side over the whole band, inside the plane's +-0.002
-		const float t = w < hudW ? (w - hudW) / (hudW - minW) : (w - hudW) / (SnapMaxW - hudW);
-		const float snapped = hudW + 0.0015f * std::clamp(t, -1.f, 1.f);
+		const float snapped = snappedOverlayDepth(w,hudW,minW,SnapMaxW);
 		for (u32 j = pp.first; j < pp.first + pp.count; j++)
 			ctx.verts[j].z = 1.f / snapped;
 		// what gets snapped, once per W (in 0.01 steps), to check nothing 3D is caught
@@ -1621,7 +1761,7 @@ static void place2DLayers(rend_context& ctx, const std::vector<PolyParam>& list,
 	const GameProfile *prof = activeProfile;
 	const float minW = prof != nullptr ? prof->snapMinW : SnapMinW;
 	const float SnapMaxW = prof != nullptr ? prof->snapMaxW : 1.05f;
-	const float hudDepth = config::VrHudDepth;
+	const float hudDepth = panelDepth();
 	const glm::vec2 centre(fbWidth * 0.5f, fbHeight * 0.5f);
 	for (u32 n = from; n < to && n < list.size(); n++)
 	{
@@ -1657,8 +1797,7 @@ static void place2DLayers(rend_context& ctx, const std::vector<PolyParam>& list,
 		const char *how;
 		if (w < hudDepth)
 		{
-			const float t = w < hudW ? (w - hudW) / (hudW - minW) : (w - hudW) / (SnapMaxW - hudW);
-			const float snapped = hudW + 0.0015f * std::clamp(t, -1.f, 1.f);
+				const float snapped = snappedOverlayDepth(w,hudW,minW,SnapMaxW);
 			for (u32 j = pp.first; j < pp.first + pp.count; j++)
 				ctx.verts[j].z = 1.f / snapped;
 			how = "put on the 2D plane";
@@ -1733,7 +1872,7 @@ static bool snapFlatScreen(rend_context& ctx, const RenderPass& pass, const Rend
 		const float t = activeProfile->snapInverseDepth && zMax > zMin
 				? 2.f * (zMax - z) / (zMax - zMin) - 1.f
 				: std::clamp((1.f / z - hudW) / (wMax - hudW), -1.f, 1.f);
-		const float snapped = 1.f / (hudW + 0.0015f * t);
+		const float snapped = 1.f / (hudW + std::min(0.0015f,hudW*.5f) * t);
 		for (u32 i = pp.first; i < pp.first + pp.count; i++)
 			ctx.verts[i].z = snapped;
 	});
@@ -1862,7 +2001,7 @@ static void hidePlayer2Prompt(rend_context& ctx, const RenderPass& pass, const R
 }
 
 bool player2Prompting() {
-	if (activeProfile != nullptr && activeProfile->gunRam.floats)
+	if (activeProfile != nullptr && (activeProfile->gunRam.floats || activeProfile->ninja))
 		return (vmPlayers.load() & 2) == 0;
 	return steadyMs() - p2PromptAt < 500;
 }
@@ -1919,6 +2058,7 @@ static struct CutsceneRegistration
 } cutsceneRegistration;
 
 bool cutscene() {
+	if (activeProfile != nullptr && activeProfile->ninja) return ninjaStory.load();
 	return cutsceneOn;
 }
 
@@ -1937,7 +2077,7 @@ static void logPlayer2Prompt()
 }
 
 bool player2PromptKnown() {
-	return p2PromptTextures[0] != 0 || (activeProfile != nullptr && activeProfile->gunRam.floats && vmPlayersKnown);
+	return p2PromptTextures[0] != 0 || (activeProfile != nullptr && (activeProfile->gunRam.floats || activeProfile->ninja) && vmPlayersKnown);
 }
 
 // A 3D polygon with some of its corners at the 2D plane's W (a game whose near plane is
@@ -2668,7 +2808,7 @@ const ReprojectParams& update(const rend_context& ctx)
 	const glm::vec2 gameFocal = readGameFocal();
 	const glm::vec2 stockTan = halfSize / (float)config::VrFocal;
 	params.tanHalf = halfSize / gameFocal;
-	params.overlay = glm::vec4(stockTan, (float)config::VrHudDepth, (float)config::VrHudW);
+	params.overlay = glm::vec4(stockTan, panelDepth(), (float)config::VrHudW);
 
 	// depth statistics now and then, for tuning a new game on the PC (not in the headset)
 	if (frameCount++ % 120 == 0 && !xr::enabled())

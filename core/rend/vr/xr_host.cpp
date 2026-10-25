@@ -968,7 +968,7 @@ void updateOrigin(bool tracked)
 		menu::place(headPose());
 }
 
-// Möller-Trumbore; returns the distance along the ray, or a negative value for a miss.
+// MÃ¶ller-Trumbore; returns the distance along the ray, or a negative value for a miss.
 float rayTriangle(const glm::vec3& o, const glm::vec3& d, const glm::vec3& a, const glm::vec3& b, const glm::vec3& c)
 {
 	const glm::vec3 e1 = b - a, e2 = c - a;
@@ -1017,7 +1017,7 @@ bool onGameScreen(const glm::vec2& screen) {
 // the position in screen ndc (-1..1, y down) and the distance along the ray.
 bool hitOverlayPlane(const glm::vec3& o, const glm::vec3& d, const glm::vec2& dcSize, glm::vec2& ndc, float& dist)
 {
-	const float depth = config::VrHudDepth;
+	const float depth = vr::panelDepth();
 	if (d.z > -1e-3f)
 		return false;
 	dist = (-depth - o.z) / d.z;
@@ -1745,7 +1745,7 @@ void updateGun(Gun& g, XrTime time, const XrSpaceLocation *locations, const bool
 	buttons |= extra;
 	// Lupin's cabinet B is the off-screen sensor, not CM's second button.
 	// Use the existing bounded reload pulse/feedback and swallow it when released.
-	if (vr::gameAnalogOffscreenReload())
+	if (vr::gameManualOffscreenReload())
 	{
 		const bool pressed = (extra & 128) != 0;
 		if (pressed && !g.reloadButtonWas) { g.reloadAt = time; haptic(g.hand, 0.02f, 0.5f); NOTICE_LOG(INPUT, "XR: player %d reload button (sensor)", g.player + 1); }

@@ -1546,7 +1546,7 @@ void main()
 		bindVertexArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
-	const float d = config::VrHudDepth;
+	const float d = vr::panelDepth();
 	const float tx = 320.f / config::VrFocal * d, ty = 240.f / config::VrFocal * d;
 	// game eye space, renderer convention (y down): top of the image has negative y
 	const float quad[] {

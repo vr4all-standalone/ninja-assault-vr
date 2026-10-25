@@ -86,7 +86,7 @@ Option<int> VrViewportAddr("vr.ViewportAddr", 0);
 Option<float> VrFovScale("vr.FovScale", 1.f);	// widen the game's view by this factor (tan of the half angle)
 Option<float> VrHudW("vr.HudW", 1.f);		// the W the game draws its 2D overlay at (sprites, text, letterbox)
 Option<bool> VrHideLetterbox("vr.HideLetterbox", true);	// drop opaque black overlay (cinematic bars)
-Option<float> VrHudDepth("vr.HudDepth", 40.f);	// game units in front of the game camera
+Option<float> VrHudDepth("vr.HudDepth", 40.f);	// reference-game units in front of the camera (panelDepth converts profile units)
 Option<float> VrYaw("vr.Yaw", 0.f);			// degrees
 Option<float> VrPitch("vr.Pitch", 0.f);		// degrees
 // PC test aid: the flat window's view, the tan of its half angles (0: the game's stock frame;

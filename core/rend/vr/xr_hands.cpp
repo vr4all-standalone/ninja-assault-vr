@@ -738,7 +738,7 @@ GunKind chosenGun()
 			own = i;
 			if (why.empty())
 				why = !config::VrGameHands ? "the game's models are off"
-						: slots[(int)GunKind::Pistol].missing ? "the in-game pistol is not made yet" : "the in-game pistol can't be read";
+						: gameModelSource() == nullptr ? "native gun model unavailable" : slots[(int)GunKind::Pistol].missing ? "the in-game pistol is not made yet" : "the in-game pistol can't be read";
 		}
 		else
 			why += std::string(why.empty() ? "" : ", ") + "no gun file loads";
@@ -803,13 +803,14 @@ std::vector<GunChoice> gunChoices()
 	if (!selectableGuns())
 		return { { (int)config::VrGun, config::VrGameHands && handsModel() != nullptr ? "The game's own" : "Arcade gun", true, true } };
 	// (with the game's own models off the pistol isn't made: the row passes it)
-	std::vector<GunChoice> choices {
-		{ 1, "In-game pistol", config::VrGameHands && gunModel(GunKind::Pistol) != nullptr, gunComplete(GunKind::Pistol) },
-	};
+	std::vector<GunChoice> choices;
+	if (gameModelSource() != nullptr)
+		choices.push_back({ 1, "In-game pistol", config::VrGameHands && gunModel(GunKind::Pistol) != nullptr, gunComplete(GunKind::Pistol) });
 	// the folder guns, whatever vr.GameHands says: the bundled ones first (a skipped one isn't made)
 	refreshOwn();
 	for (size_t i = 0; i < ownGuns.size(); i++)
 		choices.push_back({ OwnGuns, ownGuns[i]->name.c_str(), ownGuns[i]->valid, true, ownGuns[i]->file.stem.c_str() });
+	if (choices.empty()) choices.push_back({ 1, "Arcade gun", true, true });
 	return choices;
 }
 

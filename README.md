@@ -4,11 +4,11 @@ An experimental standalone Meta Quest and PC OpenXR port of **Ninja Assault**, b
 Flycast and the completed Confidential Mission and Lupin VR work. The initial game target is
 **World NJA2 Ver.A**, MAME/Flycast set **ninjaslt**.
 
-**Implementation in progress.** The shared VR menus, controllers and model infrastructure are
-inherited. Ninja-specific camera, aiming, native shot feedback, reloads, player transitions and
-later-stage behavior must be assessed against the current validation evidence. Full feature
-parity is not complete. Physical Quest and PC VR headset testing remains outstanding.
-
+**Experimental.** Camera widening, calibrated two-player aiming, native round feedback,
+reloads, story empty hands, dual-hand assignment and the paused menu have passed the recorded
+Windows simulator checks. **A native in-game firearm model has not been identified**;
+Arcade, Zapper and user GLBs are supported. Physical Quest/PC headset testing and later-stage
+coverage remain outstanding. See [validation](hotd2-vr/notes/ninja-validation.md).
 This project includes no game, BIOS or extracted game model. Use your own files. It is an
 unofficial fan project, not affiliated with Namco, Sega, Meta or the Flycast project. The CM and
 Lupin reference projects and their settings are independent of this app.
@@ -73,8 +73,9 @@ Single-player keeps the normal Start buttons and trigger-to-transfer behavior:
 
 | Quest Touch input | Single-player action |
 |---|---|
-| A / B | P1 Start / Reload |
-| X / Y | P2 Start or join / Reload |
+| A | P1 Start |
+| X | P2 Start or join |
+| B or Y | P1 Reload |
 | Either trigger | Shoot; transfer P1's single gun to that hand |
 | Left Menu | Open or close paused settings |
 | Left stick click | Recenter |
