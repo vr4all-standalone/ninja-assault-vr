@@ -23,4 +23,21 @@ inline void adaptGunInput(GunInput& last, bool sensorReload, int& x, int& y, uin
  } else if (!on) { x=last.x; y=last.y; }
  last.held = held;
 }
+// Namco JYU reloads from its off-screen position plus trigger, not its B button.
+// Keep the first pull's shot/reload category until release, independently for
+// each player. Idle coordinates remain native: unlike Lupin there is no reason
+// to hold its last ADC merely because the aim leaves the screen.
+inline void adaptNinjaInput(GunInput& last, bool ninja, int& x, int& y, uint32_t& buttons) {
+ if (!ninja) return;
+ const bool on = x >= 0 && x < 10000 && y >= 0 && y < 10000;
+ if (on) { last.x=x; last.y=y; }
+ const bool manual = (buttons & 128u) != 0;
+ const bool held = (buttons & 3u) != 0 || manual;
+ if (held) {
+  if (!last.held || manual) last.reload = manual || (buttons & 2u) || !on;
+  if (last.reload) { x=y=-10000; buttons=(buttons & ~(1u|128u))|2u; }
+  else { buttons=(buttons & ~2u)|1u; if (!on) { x=last.x; y=last.y; } }
+ }
+ last.held = held;
+}
 }

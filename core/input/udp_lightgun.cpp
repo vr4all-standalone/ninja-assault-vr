@@ -105,6 +105,7 @@ void lightgunSet(int player, int x, int y, u32 buttons)
 	if (player < 0 || player > 3)
 		return;
 	vr::adaptGunInput(gunInputs[player], vr::gameAnalogOffscreenReload(), x, y, buttons);
+	vr::adaptNinjaInput(gunInputs[player], settings.content.gameId == "NINJA ASSAULT", x, y, buttons);
 	lastPacketMs[player] = nowMs();
 	const int screenX = x * 640 / 10000, screenY = y * 480 / 10000;
 	int cabinetX = screenX, cabinetY = screenY;
