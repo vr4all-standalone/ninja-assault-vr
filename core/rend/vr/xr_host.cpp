@@ -139,8 +139,8 @@ glm::vec3 originPos;
 glm::quat originRot { 1, 0, 0, 0 };
 
 // The light guns. Player 1's is in the hand whose trigger was pulled last; once player 2
-// joins (vr.DualWield: player 2's Start), player 1's is in player 1's hand (p1Hand(): the right,
-// or with vr.P1Hand left the left) and player 2's in the other: dual wielding.
+// joins (vr.DualWield: X/left Start in single play), vr.DualP1Left puts player 1 on the left
+// by default and player 2 on the right. This preference never changes the single gun's hand.
 struct Gun
 {
 	int player;
@@ -188,7 +188,7 @@ struct Gun
 Gun guns[2] { { 0 }, { 1, Left } };
 bool dualWield;
 XrTime dualSince;
-bool p2StartWas, recenterWas, laserWas, menuWas;
+bool p2StartWas, p2JoinHeld, recenterWas, laserWas, menuWas;
 // The VR menu (the settings menu, xr_menu.h). Open, the emulator is held stopped: frame() draws
 // the last game frame again for each new head pose, with the guns, the menu and its pointers, and
 // nothing goes to the game. The menu asks for it to open or close (pauseRequest: 1 open, 0 close,
@@ -396,15 +396,13 @@ bool initActions()
 			|| !createAction(stickAction, "stick", "Menus (D-pad), world size", XR_ACTION_TYPE_VECTOR2F_INPUT)
 			|| !createAction(gripAction, "grip", "Rack the slide; hold for world size", XR_ACTION_TYPE_FLOAT_INPUT, true))
 		return false;
-	// Either trigger fires; shooting away from the screen reloads. A: player 1's Start. X: the
-	// left Start, which lets player 2 join (vr.DualWield) and is then player 2's Start. B and Y:
-	// the gun's B (the cabinet's second button, Confidential Mission's reload), B player 1's,
-	// Y player 2's once player 2 is in (before that, either is player 1's). The menu button on
-	// the left: the settings menu. The left thumbstick click recenters (held: the frame ring),
-	// the right one turns the laser off or on (kept). Thumbstick: the gun's D-pad (menus); with
-	// a grip held, up/down sizes the world. The other hand's grip racks the game pistol's slide.
-	// vr.P1Hand left (the menu's Hands) swaps the players, not the bindings: X player 1's Start, Y player
-	// 1's B, A player 2's Start (it lets player 2 join), B player 2's B (updateLightgun).
+	// Single play: either trigger fires and takes the gun, A starts P1, X joins P2,
+	// and B or Y reloads P1. Once dual play starts, the chosen Dual hands layout
+	// assigns each hand's trigger, Start and reload to its actual player.
+	// The left menu button opens settings, the left stick click recenters (held:
+	// frame ring), and the right stick click toggles the laser. The stick is the
+	// game's D-pad; grip plus stick adjusts world/gun size. A free hand can rack
+	// a game pistol's slide. These physical bindings stay the same in either layout.
 	auto suggest = [](const char *profile, std::initializer_list<std::pair<XrAction, const char *>> list) {
 		std::vector<XrActionSuggestedBinding> bindings;
 		for (const auto& [action, where] : list)
@@ -2037,6 +2035,7 @@ void updateLightgun(XrTime time)
 		guns[1] = Gun { 1, Left };
 		guns[0].triggerWas = true;
 		slide.held = false;
+		p2JoinHeld = false;
 		p2StartWas = true;	// a Start of player 2's still held doesn't join at once
 		// controllers in both hands again, with the labels (a How to play left on ends, with its line)
 		p1Armed = false;
@@ -2194,33 +2193,57 @@ void updateLightgun(XrTime time)
 	float pulls[2];
 	for (int hand : { Left, Right })
 		pulls[hand] = tracked[hand] ? floatAction(triggerAction, hand) : 0.f;
-	// vr.P1Hand (the menu's Hands, p1Hand()): each controller's Start and B are its own player's, player
-	// 1's on the right (the default) or the left. The left Start's hold for the menu (menuByHold) stays
-	// the left's. A held from closing the VR menu is no Start until let go (startSwallow): the right's.
-	const int hand1 = p1Hand(), hand2 = 1 - hand1;
+	// Single play always keeps A/right Start for P1 and X/left Start for P2 Join.
+	// Once joined, Start and reload follow each player's actual dual hand. The left
+	// Start's menu hold remains on the physical left controller.
+	int hand1 = p1Hand(), hand2 = 1 - hand1;
 	const bool rightStart = boolAction(startAction, Right) && !startSwallow;
-	const bool p1Start = hand1 == Right ? rightStart : leftStart;
-	const bool p2Start = hand1 == Right ? leftStart : rightStart;
-	// Joining takes both controllers (with one, player 2's Start does nothing) and a game
-	// that shows when player 2 is out again (its profile knows the prompt). Not online
-	// (GGPO): player 2 is the other player there and only this side's player 1 is sent, so
-	// there player 2's Start does nothing.
+	bool p1Start = hand1 == Right ? rightStart : leftStart;
+	bool p2Start = hand1 == Right ? leftStart : rightStart;
+	if (!leftStart)
+		p2JoinHeld = false;
+	if (p2JoinHeld && dualWield)
+	{
+		// The initiating X stays with P2 until release even after P1 moves left.
+		if (hand1 == Left)
+			p1Start = false;
+		p2Start = true;
+	}
+	auto waitForRelease = [](Gun& g) {
+		g.triggerWas = g.triggerWait = true;
+		g.pullAt = g.reloadAt = g.heldAt = 0;
+		g.shotsDue = g.autosDue = g.clicksDue = 0;
+		g.offArmed = false;
+	};
+	// Joining takes both controllers and a game that identifies when P2 is out.
+	// In netplay the remote side owns P2, so local dual play stays off.
 	const bool canJoin = config::VrDualWield && !config::GGPOEnable && player2PromptKnown() && tracked[Left] && tracked[Right];
 	if (canJoin && p2Start && !p2StartWas && !dualWield)
 	{
+		// Keep the current controller's reload latches when its player changes.
+		const bool down[2] { guns[0].hand == Left && guns[0].pointedDown, guns[0].hand == Right && guns[0].pointedDown };
+		const bool reloadHeld[2] { guns[0].hand == Left && guns[0].reloadButtonWas, guns[0].hand == Right && guns[0].reloadButtonWas };
 		dualWield = true;
 		dualSince = time;
+		// Resolve the dual layout after changing mode, including this joining frame.
+		hand1 = p1Hand();
+		hand2 = 1 - hand1;
 		guns[0].hand = hand1;
 		guns[1] = Gun { 1, hand2 };
-		// a trigger already held doesn't fire: it waits to be let go
-		guns[1].triggerWas = true;
-		guns[1].triggerWait = true;
+		for (Gun& g : guns)
+		{
+			g.pointedDown = down[g.hand];
+			g.reloadButtonWas = reloadHeld[g.hand];
+			waitForRelease(g);
+		}
+		// The single-mode joining press belongs to P2 even when its new hand is right.
+		p2Start = true;
+		p2JoinHeld = leftStart;
 		slide.held = false;
 		haptic(hand2, 0.05f, 0.6f);
 		NOTICE_LOG(INPUT, "XR: player 2 joins: a gun in each hand");
 		noteHolds("player 2 joins");
 	}
-	p2StartWas = p2Start;
 	if (dualWield && (!config::VrDualWield || config::GGPOEnable || !player2PromptKnown()
 			|| ((time - dualSince) > 4'000'000'000LL && player2Prompting())))
 	{
@@ -2229,29 +2252,29 @@ void updateLightgun(XrTime time)
 		NOTICE_LOG(INPUT, "XR: player 2 is out: one gun again");
 		noteHolds("player 2 out");
 	}
-	// Hands changed in the menu with both players in (the menu has closed by now): the guns swap hands,
-	// each player keeping theirs and their game; a trigger held through it waits to be let go.
+	// A live dual-layout change moves both players together. Downward and button
+	// reload latches stay with their physical controllers; held triggers must release.
 	if (dualWield && guns[0].hand != hand1)
 	{
-		// Downward reloads latch per controller: a hand held down through the menu is no new gesture.
 		std::swap(guns[0].pointedDown, guns[1].pointedDown);
+		std::swap(guns[0].reloadButtonWas, guns[1].reloadButtonWas);
 		for (Gun& g : guns)
 		{
 			g.hand = 1 - g.hand;
-			g.triggerWas = g.triggerWait = true;
-			g.pullAt = 0;
-			g.offArmed = false;
+			waitForRelease(g);
 		}
 		NOTICE_LOG(INPUT, "XR: the guns swap hands: player 1's in the %s", hand1 == Right ? "right" : "left");
 	}
-	// Player 2 joins as at the cabinet: with player 2's Start (vr.DualWield; the left controller's, the
-	// right's with vr.P1Hand left), and that hand gets player 2's gun (above). Out again once the game
-	// asks for player 2 in its corner again (lost, or never got in), after a few seconds to let the join land.
 	Gun& gun = guns[0];
 	if (!dualWield)
 	{
-		// One gun: in the hand whose trigger is pulled while the gun hand's isn't, or the
-		// other one when the gun hand's controller is gone (asleep, battery).
+		// Restore the fixed single-player buttons immediately if P2 just left.
+		hand1 = Right;
+		hand2 = Left;
+		p1Start = rightStart;
+		p2Start = leftStart;
+		// One gun: in the hand whose trigger is pulled while the gun hand's isn't,
+		// or the other one when the gun hand's controller is gone (asleep, battery).
 		const int otherHand = 1 - gun.hand;
 		if (!gun.triggerWas && ((tracked[otherHand] && !tracked[gun.hand]) || (pulls[otherHand] > 0.6f && pulls[gun.hand] < 0.35f)))
 		{
@@ -2260,11 +2283,10 @@ void updateLightgun(XrTime time)
 			noteHolds("gun moves");
 		}
 	}
+	p2StartWas = p2Start;
 
-	// The buttons that aren't the trigger. One gun: player 1's Start (player 2's only lets player 2
-	// join, above), either B too (the gun's B, bit 128: the cabinet's second button, which reloads in
-	// Confidential Mission). Two guns: each hand's are its player's. The D-pad (menus) is player 1's.
-	// (B held from closing the VR menu: not yet.)
+	// Single: A is P1 Start, X joins P2, and B or Y reloads P1. Dual: each
+	// hand's Start and reload belong to its assigned player. D-pad stays with P1.
 	u32 p1 = dpad, p2 = 0;
 	if (dualWield)
 	{
@@ -2784,9 +2806,12 @@ Holds holds(int hand)
 
 int p1Hand()
 {
-	std::string hand = config::VrP1Hand.get();
-	std::transform(hand.begin(), hand.end(), hand.begin(), [](unsigned char c) { return (char)std::tolower(c); });
-	return hand == "left" ? Left : Right;
+	return dualWield && config::VrDualP1Left ? Left : Right;
+}
+
+bool dualWielding()
+{
+	return dualWield;
 }
 
 int hapticsLevel()
@@ -2850,7 +2875,7 @@ void term()
 	originSet = recenterRequested = false;
 	guns[0] = Gun { 0 };
 	guns[1] = Gun { 1, Left };
-	dualWield = p2StartWas = recenterWas = laserWas = menuWas = p1StartWas = false;
+	dualWield = p2StartWas = p2JoinHeld = recenterWas = laserWas = menuWas = p1StartWas = false;
 	skipWas = skipSwallow = false;
 	// (what the hands hold stays, p1Armed and menuHowToPlay: player 2's gun went without a word)
 	for (int hand : { Left, Right })

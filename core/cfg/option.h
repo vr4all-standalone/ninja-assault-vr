@@ -507,7 +507,7 @@ extern Option<int> VrGun;
 extern Option<std::string> VrGunFile;
 extern Option<int> VrGunAngle;
 extern Option<int> VrReload;
-extern Option<std::string> VrP1Hand;
+extern Option<bool> VrDualP1Left;
 extern Option<bool> CustomTextures;
 extern Option<bool> PreloadCustomTextures;
 extern Option<bool> DumpTextures;
