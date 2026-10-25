@@ -1,40 +1,72 @@
-# Ninja Assault validation
+# Ninja Assault VR validation
 
-Experimental local port of World NJA2 Ver.A; physical headset validation has not been performed.
+Release 1.0.0 targets World NJA2 Ver.A. Binary source commit:
+`c7a94cd021a83ba06811ae2bb69fc4ea32419377`. Public-page updates after that commit
+change documentation and promotional assets only. Physical headset validation
+and later-stage coverage remain pending.
 
-Measured evidence is in ninja-findings.md. Completed development checks at this point:
-- Android setup:31 JVM tests; VR Java, resources and merged manifest pass. Owned World cartridge/BIOS structural metadata reportsREADY.
-- Loaded-game identity8, inputadapter15 plus inherited23, calibrationinverse32, accepted-roundstate23 checks pass.
-- Dual-only hand assignment enabledbydefault; production routing/menu/persistence/controller-label tests243 checks pass (single A/X stays, eithertriggertransfer, immediate dualroles, heldjoin, livefliprelease/latches).
-- Packaging synthetic checks43 pass; copied licensed models/credits are identical to reference, no extracted game models supplied.
-- Original-word guards:53 matched the private originalWorld RAM sample.
-- Private native runs: baseline65s, freeplay125s, early71s, combat76s, widegrid70s. Widened-grid7causal samples acrossbothplayers matched native2Dgamecoordinates within1pixel. Originalcamera-recordfocal718.744 remained whiledrawprojection288.137. Native3Dhit-testunprojection is a separate check.
-- NativefreeplayStart, independent8roundmagazines, acceptedprojectilerings, manualoffscreenreload, P2join and story/combat transitions observed.
+## Automated checks
 
-Remaining before delivery: final XRsim runtime/menu/empty/reload/hand checks, complete neutral attract/model investigation, branch review, final clean-source Quest/PC builds and package/signature/source-version/content verification. Native weapon extraction remains unavailable unless an actual eligible firearm is identified; Arcade/Zapper/customguns are independent supported options. Full laterstage, stereo comfort and sustained physical headset behavior remain unverified.
+- 401 focused checks pass: identity 8, Ninja input 15, inherited input 23,
+  calibration 32, native state 23, panel units 14, dual-hand routing 243 and
+  synthetic packaging 43.
+- 31 Android setup JVM checks pass, covering complete/missing/malformed sets,
+  cartridge CRC/size metadata, BIOS shadowing/embedding, explicit paths and status.
+- VR Java, resources and the merged standalone Android manifest compile.
+- All 53 original-word guards match the private original World RAM sample.
 
-## Final source verification before artifact builds
+## Native game and simulator evidence
 
-All focused native, input, state, panel, dual-hand and synthetic distribution checks pass;
-Android NinjaFiles/NinjaStartStatus suites pass31tests. Runtime ninja-xr-gameplay73s
-produced exactly9accepted-roundkicks and2emptyclicks perplayer; singleleft/righttransfer,
-defaultP1left/P2rightjoin, B/Yreload, storyon/off and menuopen/close allmatched.
+Private baseline, free-play, combat and wide-grid runs measured the game's own
+camera, calibration, accepted rounds, eight-round magazines and reload behavior.
+Seven causal aiming samples across both players matched native 2D coordinates
+within one pixel. Wider rendering changes draw focal from 718.744 to 288.137
+while preserving the original collision lens.
 
-Fresh review found and fixed the profile-unit HUD distance bug. Paneldistance nowconverts
-referenceunitsconsistently in3Drendering, framebufferflatdisplay, 2Dlayercomparison and
-ray/planeintersection. Native default40now4000Ninjaunits=4.4m, limits15..120=1.65..13.2m;
-forwardmuzzlehitsarepositive. Newpaneltests wereRED10failures thenGREEN14checks. Small
-HUDsnapping alsostayspositiveandmonotonicacrossitswholeprofileband. Runtime
-ninja-panel-runtime63s loads actualArcade/controllerbundles, showsHUD/menu, and logs a
-flat-map hit at395cm from theextendedgun. Fiveprivate screenshots visuallychecked.
+`ninja_native_ray_check.py` compares stock combat RAM with widened-grid RAM:
+the input scalar remains bit-identical at 1.3891451358795166 and collision focal
+at 718.7440795898438. World-ray errors are 2.87445e-8 and 6.99672e-9, with zero
+origin error. Drawing and hit-test lens behavior were measured independently
+from Confidential Mission and Lupin.
 
-Nativehit-testlensverification nowcausal: ninja_native_ray_check.py stockcombatRAM0002
-versuswidegridRAM0005 provesbit-identicalinputscalar1.3891451358795166 andcollisionfocal
-718.7440795898438 whiledrawing718.744049->288.136711. Worldrayreferenceerrors are
-2.87445e-8/6.99672e-9, zerooriginerror. Sharedcameraandinputassumptionsweremeasured
-independentlyofCM/Lupin.
+The 73-second `ninja-xr-gameplay` run produced exactly nine accepted-round kicks
+and two empty clicks per player. Both-hand single-player transfer, default
+P1-left/P2-right joining, B/Y reloads, story/combat transitions and menu opening
+and closing passed. Held joins, live dual-hand reversal and return to single
+play have production routing/menu/label regression coverage.
 
-Final signed artifact hashes/content checks are written to dist/validation-results.json
-when packaging finishes. No public release, headset installation or VR4ALL listing is part
-of this local delivery. Nativefirearm extraction remains unavailable; allphysicalheadset
-andlater-stage items remain on ninja-vr-headset-checklist.md.
+Review found and corrected the profile-unit HUD distance bug. Panel placement,
+flat rendering, layer comparisons and gun-ray intersection use consistent units.
+The default panel distance is 4.4 m; the setting range is 1.65–13.2 m. Fourteen
+panel checks cover finite positive depths and monotonic snapping. A final
+63-second run loaded the actual licensed Arcade gun and controller bundle,
+displayed the HUD/menu and registered a forward flat-panel hit at 395 cm from
+the extended gun. Five screenshots were visually inspected.
+
+## Model investigation
+
+A neutral 175-second attract run yielded 12 rips at 60–170 seconds and 12
+screenshots at 61–171 seconds. Inspected coverage includes story/protagonists,
+a sword confrontation, title and rule-instruction demo. The sampled protagonist
+weapons resolve to blades/scabbards, including a visible katana.
+
+No complete eligible native firearm model was identified in those samples.
+This does not establish that none exists elsewhere in the game. Native firearm
+extraction is unavailable; licensed Arcade/Zapper and custom GLBs are supported.
+
+## Release artifacts
+
+Clean-source Windows and Quest builds completed. Strict packaging verified:
+
+- Android package `com.vrlightgunhub.ninjaassault`, versionCode 1 and versionName
+  `1.0.0-gc7a94cd02`.
+- Release APK signature with public signer name `CN=VR Light Gun Hub`.
+- PC executable and APK native library both attest the binary source commit.
+- Both packages include the same nine licensed model/credit files and software
+  licence notices, with no game data, extracted game models or signing material.
+- SHA-256 checksums are supplied with the release.
+
+Physical headset installation, tracking, comfort, sustained performance and full
+later-stage behavior have not been validated. See the
+[headset checklist](ninja-vr-headset-checklist.md) and
+[measured findings](ninja-findings.md).
