@@ -2971,8 +2971,10 @@ bool frame()
 	const bool staff = source != nullptr && source->kind == hands::Source::HerosStaff;
 	const bool cmGuns = source != nullptr && source->kind == hands::Source::CmGuns;
 	const bool lupinGun = source != nullptr && source->kind == hands::Source::LupinGun;
-	const bool gunModels = cmGuns || lupinGun;
-	const char *title = lupinGun ? "LUPIN THE THIRD VR" : cmGuns ? "CONFIDENTIAL MISSION VR" : staff ? "THE MAZE OF THE KINGS VR" : "THE HOUSE OF THE DEAD 2 VR";
+	const bool ninjaGun = source != nullptr && source->kind == hands::Source::NinjaGun;
+	const bool attractGun = lupinGun || ninjaGun;
+	const bool gunModels = cmGuns || attractGun;
+	const char *title = ninjaGun ? "NINJA ASSAULT VR" : lupinGun ? "LUPIN THE THIRD VR" : cmGuns ? "CONFIDENTIAL MISSION VR" : staff ? "THE MAZE OF THE KINGS VR" : "THE HOUSE OF THE DEAD 2 VR";
 	// CM VR 1.2: Confidential Mission's panels in its start screen's colours (VR4All's: the panel, its
 	// line, violet, cream, muted grey, lime)
 	const glm::vec3 violet(169 / 255.f, 155 / 255.f, 1.f), cream(248 / 255.f, 245 / 255.f, 239 / 255.f), muted(155 / 255.f, 165 / 255.f, 180 / 255.f);
@@ -2988,8 +2990,8 @@ bool frame()
 		panel.lines = {
 			{ title, 0.085f, violet },
 			{ "", 0.03f, cream },
-			{ lupinGun ? "Making your pistol from your game files (once)" : "Making your guns from your game files (once)", 0.064f, cream },
-			{ lupinGun ? "Watching the attract demo, only this once" : "About a minute or two, only this once", 0.047f, muted },
+			{ ninjaGun ? "Making your Mach Gun from your game files (once)" : lupinGun ? "Making your pistol from your game files (once)" : "Making your guns from your game files (once)", 0.064f, cream },
+			{ attractGun ? "Watching the attract demo, only this once" : "About a minute or two, only this once", 0.047f, muted },
 		};
 		panel.progress = hands::prepProgress();
 		panel.footer = "B: skip (the Arcade gun this time)";

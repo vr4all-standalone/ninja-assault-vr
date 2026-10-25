@@ -55,7 +55,7 @@ const char* label(const Words& words,int hand,Button button){for(const Label& l:
 int main(){
  check(defaultEnabled,"dual P1-left preference is enabled by default in persisted config");
  check(!oldSettingUsed,"global P1 hand preference no longer controls single play");
- check(menuNamed,"menu names the dual-only preference Dual hands");
+ check(menuNamed,"menu names the dual-only preference Two players");
  for(bool preference:{false,true}){
   reset();config::VrDualP1Left.value=preference;
   check(p1Hand()==Right,"single startup role stays P1 right for either preference");

@@ -22,7 +22,25 @@ P1struct3869BC, P2+0x30. Slot+0,lifecycle+1,active+2,healthu16+6,ammou16+8. Nati
 Accepted shot native code0FAB94/96/98 decrementsammo. Projectile ring481338/3C startsFFFFFFFFthen0,1,2,3,0 on accepted rounds; reload replenishesammo without ringadvance. ninja-combat confirms P1t48ammo8->7ring-1->0,t49ammo7->6ring0->1,t50outside reload6->8ring1unchanged,t51accepted8->7ring1->2,t53reload7->8unchanged; P2join55active1ammo8,shot57ammo7ring0. Empty and VRfeedback checks pending.
 
 ## Native weapon models
-Current captures show sword enemies and castle story, no complete firearm. Texture4AA800 is katana grip/guard, not a pistol. Do not claim Lupin/CM caches as Ninja assets. Shared gun menu supports licensed Arcade/Zapper and custom GLBs; native firearm preparation is unavailable until eligible geometry is identified. Broader attract investigation pending.
+The heroes' wood-and-metal Mach Gun is identified on texture **0x4af000**, TCW
+**0x48095e00**, a 256x256 VQ RGB565 atlas with wooden body, metal grip/lock and
+octagonal muzzle. Texture0x4aa800 remains the separate blade/prop atlas.
+
+The dense neutral story capture first contains the target at82.254s;83.270–95.300s
+repeatedly shows two complete guns. Each has64strips and203nondegenerate triangles.
+At join distance10gameunits,52instances from26frames share the same complete UV
+topology; worst unique-UV rigid-fit RMS is0.000345gameunits. The two instances are
+at least772units apart in the measured frame. PCA extents384.687x232.157x43.994;
+gunAxes finds a367.733unit barrel. Relative to a1.75mhero, length is0.365–0.380m;
+the profile uses0.40m. Muzzle-face strips sit at the forward end, with grip behind.
+
+The production C++builder makes a284236byte complete/strict-valid gun-only HND1v2
+model with64source strips. First-run prep uses the neutral attract sequence with
+no Start presses, bounded to150gameseconds, strict atomic cache/retry and Bskip.
+The cache is **gun-na-mach.bin**; no other game's cache is reused. The renderer
+also validates completeness, counts, finite data and bounds before its parser.
+Private runtime extracted at81gameseconds/about17wallseconds on the PC. Quest
+timing is unmeasured. Models and private captures remain outside tracked source.
 
 ## Evidence and limits
 Baseline65s, freeplay125s, early71s, combat76s runs passed their existing profile/boot checks. Native identity8checks, manual input5checks and affine inverse32checks pass. Android31JVMchecks/VRJava/resources/manifest pass at2d3e672a7. These do not establish physical headset validation or later-stage coverage. Final validation report must name actual final builds and runtime tests.
@@ -32,4 +50,4 @@ underwidening. Nativeworldraymatchesstockcamerarecord to<3e-8. P1/P2runtimefeedb
 9real-roundkicks/2emptyclicks. HUDpaneldepth uses referenceunits / profileunitScale inall
 render/aim paths; tinyHUDlayercompression boundedpositive. Dual-only defaultP1left/P2right
 passes243productionchecks; singletriggertransfer andstartup remainfixed. Nativeweapon
-model notidentified incurrentcaptures andnot falselyoffered bythegunmenu.
+model identified and supported as In-game Mach Gun in1.0.1; see the section above.

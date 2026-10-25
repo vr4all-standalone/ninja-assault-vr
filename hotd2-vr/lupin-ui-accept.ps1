@@ -50,7 +50,7 @@ $scenarios=[ordered]@{
         Expect=@('XR: menu at 1\.20 m, 13 rows, row pitch 0\.063 m, top row \+0\.369 m',
             'XR: menu Recenter$','XR: menu Gun -> Arcade gun','XR: menu Gun -> Zapper',
             'XR: menu Gun angle -> \+1$','XR: menu Reload -> Point off-screen$',
-            'XR: menu Hands -> P1 left hand - P2 right hand$','XR: menu Laser -> Off$','XR: menu Haptics -> Strong$','XR: menu World size -> 0\.121$',
+            'XR: menu Two players -> P1 left / P2 right$','XR: menu Laser -> Off$','XR: menu Haptics -> Strong$','XR: menu World size -> 0\.121$',
             'XR: menu Panel distance -> 45$','XR: menu Wider view -> Off \(next start\)$',
             'XR: how to play on$','XR: how to play off \(chosen\)$','XR: menu quit armed$',
             'XR: menu Resume$','XR: menu closed \(resumed\)$')
@@ -64,7 +64,7 @@ $scenarios=[ordered]@{
         '9.3=stick right 0 -1 150','9.8=stick right 1 0 150',
         '10.3=stick right 0 -1 150','10.8=stick right 1 0 150','12.8=xr right/b 1 150')
         Expect=@('XR: menu Gun angle -> \+2$','XR: menu Reload -> Shoot off-screen$',
-            'XR: menu Hands -> P1 right hand - P2 left hand$','XR: menu Laser -> On$','XR: menu Haptics -> Medium$','XR: menu World size -> 0\.133$',
+            'XR: menu Two players -> P1 right / P2 left$','XR: menu Laser -> On$','XR: menu Haptics -> Medium$','XR: menu World size -> 0\.133$',
             'XR: menu Panel distance -> 50$','XR: menu Wider view -> On \(next start\)$','XR: menu closed \(resumed\)$')
         Reject=@('XR: player [12] reload button'); Requires='menu' }
     labels=@{ Seconds=16; Config=$base+$defaults; Visible=$true; At=@('2=xr left/menu 1 150',

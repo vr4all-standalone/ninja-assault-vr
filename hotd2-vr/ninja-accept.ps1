@@ -9,6 +9,10 @@ if($Only -eq 'units') {
  }
  & (Join-Path $PSScriptRoot 'ninja-dual-hands-test.ps1')
  if($LASTEXITCODE -ne 0){throw 'Dual hand checks failed'}
+ & (Join-Path $PSScriptRoot 're\hands_build_test.cmd')
+ if($LASTEXITCODE -ne 0){throw 'Gun builder/cache checks failed'}
+ & (Join-Path $PSScriptRoot 're\lupin_render_cache_test.ps1')
+ if($LASTEXITCODE -ne 0){throw 'Renderer cache checks failed'}
  & (Join-Path $PSScriptRoot 'package-release-tests.ps1')
  if($LASTEXITCODE -ne 0){throw 'Package regression checks failed'}
  exit 0

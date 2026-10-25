@@ -17,15 +17,15 @@ App ID: com.vrlightgunhub.ninjaassault. Keep game data and private captures/logs
 ## Start, single player and dual hands
 
 - [ ] A starts single-player through native free play without a coin action; X starts/joins P2.
-- [ ] Before P2 joins, either trigger fires/transfers P1's single gun. Dual hands does not change single-player Start/Reload buttons or transfer behavior.
-- [ ] Dual hands defaults to P1 left/P2 right. With two players active, X/Y control P1 Start/Reload and A/B control P2 Start/Reload.
+- [ ] Before P2 joins, either trigger fires/transfers P1's single gun. Two players does not change single-player Start/Reload buttons or transfer behavior.
+- [ ] Two players defaults to P1 left/P2 right. With two players active, X/Y control P1 Start/Reload and A/B control P2 Start/Reload.
 - [ ] Selecting the opposite dual assignment updates both guns, labels and Start/Reload buttons only for dual mode; the setting survives relaunch.
 - [ ] Swapping dual assignment preserves players/ammunition; held triggers wait for release. Returning to single-player restores trigger transfer.
 - [ ] Touch, Index, Vive and WMR labels meet the controls for each actually tested profile; Trigger appears above Stick where present.
 
 ## Paused menu
 
-- [ ] Thirteen rows appear in order: Resume, Recenter, Gun, Gun angle, Reload, Dual hands, Laser, Haptics, World size, Panel distance, Wider view, How to play, Quit.
+- [ ] Thirteen rows appear in order: Resume, Recenter, Gun, Gun angle, Reload, Two players, Laser, Haptics, World size, Panel distance, Wider view, How to play, Quit.
 - [ ] Either pointer/trigger and stick repeat work. Opening settings pauses simulation and audio while head movement stays live.
 - [ ] Resume, B, rapid toggles, focus transitions and recenter do not fire, reload or leave a stuck input.
 - [ ] Menu pointers remain visible with Laser off. How to play shows the matching controller labels and restores the prior view on closing.
@@ -68,3 +68,11 @@ App ID: com.vrlightgunhub.ninjaassault. Keep game data and private captures/logs
 For failures record build commit/version, scene, player/hand, reproduction steps and private
 log/capture paths. Leave every check not actually performed unchecked. See
 [native findings](ninja-findings.md) and the [validation record](ninja-validation.md).
+
+## Mach Gun update (1.0.1)
+
+- [ ] First launch shows Ninja preparation, then the native Mach Gun with original textures.
+- [ ] B skips to Arcade; next launch retries. A valid cache avoids preparation.
+- [ ] The native gun fits each controller, fires forward, reloads and follows trigger transfer.
+- [ ] P2 joining gives each player the same correct native model; live dual reversal stays safe.
+- [ ] Menu gun switching/preview, haptics and story empty hands still work with the native gun.

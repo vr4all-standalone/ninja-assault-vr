@@ -680,6 +680,15 @@ static std::vector<GameProfile> makeProfiles()
  // Ninja Assault, World NJA2 Ver.A. Private baseline and freeplay captures.
  p = GameProfile();
  p.gameId = "NINJA ASSAULT"; p.ninja = true; p.gunMenu = true;
+ // The heroes' complete wood-and-metal Mach Gun in the neutral story sequence.
+ // Texture0x4af000,64 strips/203 nondegenerate triangles per instance. Two heroes
+ // share it;10 game units joins each gun's pieces without joining the two guns.
+ // The stock and wide private captures produce the same complete gun. No game
+ // data is supplied: preparation watches the user's own attract sequence.
+ p.model.kind = hands::Source::NinjaGun;
+ p.model.prepSeconds = 150.f;
+ p.model.guns[1] = { "Mach Gun", "gun-na-mach.bin", { 0x4af000 }, 64, 64, 0.40f, false,
+                    {}, 0, {}, 0.f, 0.f, 10.f };
  p.projAddr = 0x0E0600; p.viewportAddr = 0x0E0728;
  p.focal = 718.744f; p.fovScale = 2.f;
  // Main perspective setter: full angle in r4, halved at 08F8C8 before sin/tan.

@@ -43,7 +43,7 @@ function Archive([string]$name, [hashtable]$entries) {
 try {
     Check 'Ninja application ID' ($appId -eq 'com.vrlightgunhub.ninjaassault')
     Check 'Ninja label' ($appLabel -eq 'Ninja Assault VR')
-    Check 'Ninja release base version' ($appVersion -eq '1.0.0')
+    Check 'Ninja release base version' ($appVersion -eq '1.0.1')
     Check 'Ninja setup launcher' ($appLauncher -eq 'com.flycast.emulator.NinjaStartActivity')
     Check 'Ninja PC launcher name' ($playCmd -eq 'Play Ninja Assault.cmd')
     $banned = @('roms/NINJASLT.ZIP','roms/lupinshoo/gds-0018.chd','gds-0018.cue','gds-0018.gdi',
@@ -82,16 +82,16 @@ try {
         '  E: application', '    E: activity', '      A: android:name(0x01010003)="com.flycast.emulator.NinjaStartActivity"',
         '      E: intent-filter', '        E: category', '          A: android:name(0x01010003)="android.intent.category.LAUNCHER"')
     Check 'manifest launcher parser uses activity owner' (@(Get-LauncherOwners $tree) -join ',' -eq 'com.flycast.emulator.NinjaStartActivity')
-    $badging = @("package: name='com.vrlightgunhub.ninjaassault' versionCode='1' versionName='1.0.0-gabc123'", "application-label:'Ninja Assault VR'")
+    $badging = @("package: name='com.vrlightgunhub.ninjaassault' versionCode='2' versionName='1.0.1-gabc123'", "application-label:'Ninja Assault VR'")
     $hasIdentityCheck = [bool](Get-Command Find-AppIdentityFault -ErrorAction SilentlyContinue)
     Check 'APK metadata validator is independently testable' $hasIdentityCheck
     if ($hasIdentityCheck) {
         Check 'valid Ninja APK metadata accepted' (@(Find-AppIdentityFault $badging $tree 'abc123' $false).Count -eq 0)
         foreach ($case in @(
             @('package', 'com.vrlightgunhub.ninjaassault', 'com.vrlightgunhub.confmiss'),
-            @('version code', "versionCode='1'", "versionCode='9'"),
-            @('base version', '1.0.0-gabc123', '1.2.0-gabc123'),
-            @('commit version', '1.0.0-gabc123', '1.0.0-gdef456'),
+            @('version code', "versionCode='2'", "versionCode='9'"),
+            @('base version', '1.0.1-gabc123', '1.2.0-gabc123'),
+            @('commit version', '1.0.1-gabc123', '1.0.1-gdef456'),
             @('label', 'Ninja Assault VR', 'Confidential Mission VR'))) {
             $changed = @($badging | ForEach-Object { $_.Replace($case[1],$case[2]) })
             Check "wrong APK $($case[0]) rejected" (@(Find-AppIdentityFault $changed $tree 'abc123' $false).Count -gt 0)

@@ -5,7 +5,7 @@
 # Ninja Assault VR
 ### SEGA NAOMI Light-Gun Action · Standalone Meta Quest & PC VR
 
-[![Release v1.0.0](https://img.shields.io/badge/Release-v1.0.0_Experimental-e49c35?style=for-the-badge)](https://github.com/vr4all-standalone/ninja-assault-vr/releases/latest)
+[![Release v1.0.1](https://img.shields.io/badge/Release-v1.0.1_Experimental-e49c35?style=for-the-badge)](https://github.com/vr4all-standalone/ninja-assault-vr/releases/latest)
 [![Quest and PC VR](https://img.shields.io/badge/Headset-Quest_%C2%B7_PC_VR_OpenXR-blue?style=for-the-badge)](#installation)
 [![Original game required](https://img.shields.io/badge/Your_Game-ninjaslt_World_NJA2_Ver.A-orange?style=for-the-badge)](#what-you-need)
 
@@ -36,21 +36,22 @@ itself based on **[Flycast](https://github.com/flyinghead/flycast)**.
 
 **Status: experimental.** Quest and Windows builds, simulator gameplay, aiming, menus,
 reloads and hand transitions pass the recorded checks. **Physical headset testing and
-later-stage coverage remain pending.** A native in-game firearm model has not been
-identified; the licensed Arcade gun, Zapper and custom GLB guns are supported.
+later-stage coverage remain pending.** The original wood-and-metal **Mach Gun** is
+automatically extracted from your own game on first launch. Arcade, Zapper and custom
+GLB guns remain available.
 
 ## Key VR features
 
 - **Stereo 3D and tracked viewing.** Move and turn your head inside reconstructed scenes.
   Wider view draws extra scenery while preserving the original game's hit-test lens.
   HUD, subtitles and instructions sit on an adjustable panel in front of you.
-- **Your controller is the light gun.** Choose the Arcade gun, Zapper or your own GLB.
-  Adjust gun angle from **−30° to +30°**, gun size and world size.
+- **Your controller is the light gun.** Choose the original **In-game Mach Gun**,
+  extracted from your own game, the Arcade gun, Zapper or your own GLB. Adjust gun angle from **−30° to +30°**, gun size and world size.
 - **Feedback follows real rounds.** Recoil, muzzle flash and haptics follow the game's
   accepted shots. Empty magazines click without a firing kick. Haptics offers
   **Off, Light, Medium and Strong**.
 - **Two players on one headset.** Each controller controls a separate player, with its
-  own eight-round magazine and game state. **Dual hands defaults to P1 left / P2 right**.
+  own eight-round magazine and game state. **Two players defaults to P1 left / P2 right**.
   Reverse the assignment in settings while keeping each player's state.
 - **Either hand in single player.** Pull either trigger to shoot and transfer P1's gun
   to that hand. The two-player hand preference does not change this behavior.
@@ -97,7 +98,14 @@ or certify full data integrity. Keep your original files and prepare a separate 
 2. Copy your own game and BIOS files to the layout above.
 3. Open **Ninja Assault VR** under **Unknown sources**. If prompted, enable **All files access**.
 4. Select **Look again**. When setup says **READY**, select **Play**.
-5. Press **A** to start P1. Press **X** to join P2 when you want two guns.
+5. On first launch, keep the app open while it watches the attract demo and makes
+   your **Mach Gun**. **B** skips to the Arcade gun for this session; next launch retries.
+6. Press **A** to start P1. Press **X** to join P2 when you want two guns.
+
+The complete gun is cached for later launches. Missing, incomplete or corrupt caches
+are regenerated. Preparation took about **17 seconds on the development PC**; Quest
+timing is unmeasured. Choose **Menu → Gun → In-game Mach Gun** to return to it after
+selecting another gun. Both players use this native model.
 
 Quit from the VR menu returns to setup. Play then starts a fresh game process. The app's
 own games folder also works without shared-storage access. Android package:
@@ -135,7 +143,7 @@ native depth interpolation and VR. Keep this folder separate from other Flycast 
 | **Grip + stick left/right** | Change gun size |
 | **Stick** | Game D-pad |
 
-**With both players active**, **Dual hands → P1 left / P2 right** is the default.
+**With both players active**, **Two players → P1 left / P2 right** is the default.
 Left **X/Y** become P1 Start/Reload; right **A/B** become P2 Start/Reload.
 Choose **P1 right / P2 left** to reverse the two-player assignment. Single-player
 Start/join buttons and either-trigger transfer keep the behavior shown above.
@@ -143,7 +151,7 @@ Touch, Index, Vive and WMR use their controller-specific labels and bindings.
 
 ## Menu
 
-**Resume · Recenter · Gun · Gun angle · Reload · Dual hands · Laser · Haptics ·
+**Resume · Recenter · Gun · Gun angle · Reload · Two players · Laser · Haptics ·
 World size · Panel distance · Wider view · How to play · Quit**
 
 Either pointer and stick navigation work in the menu. Simulation and audio pause while
@@ -158,16 +166,17 @@ On PC the app checks beside `flycast.exe`, then beside the game ZIP, then the bu
 `data/models/`. Matching user files override bundled models; controller sides fall
 back independently. See the [model format](hotd2-vr/notes/ninja-development.md#user-models).
 
-**Native Ninja Assault gun extraction is unavailable pending identification of a complete
-eligible model.** This release uses the licensed Arcade/Zapper choices and user models.
+The **Mach Gun** is extracted locally from the heroes' story scene, with its original
+wood and metal textures. It is a complete gun without the characters' hands. No extracted
+model or game texture is included in the release files.
 
 ## Validation and development
 
-The release binaries were built from **`c7a94cd021a83ba06811ae2bb69fc4ea32419377`**:
-**401 focused native/routing/package checks** and **31 Android setup checks** passed.
-Simulator runs checked both players, native aiming, accepted shots and empty clicks,
-reloads, story transitions, hand transfer and the HUD/menu with bundled models.
-The public page can receive documentation updates after that binary source commit.
+The **v1.0.1** release tag identifies the binary source. Both executables embed that
+commit. The 401 original focused checks and 31 Android setup checks are supplemented
+by 14 renderer-cache checks and 16 shared gun-builder/cache cases. Simulator checks
+cover automatic extraction, cached loading, skip/retry and the native model alongside
+the existing aiming, two-player, reload, empty-click and menu behavior.
 
 These checks do not establish physical tracking quality, stereo comfort, sustained
 headset performance or every later stage. Please report the headset, game revision,

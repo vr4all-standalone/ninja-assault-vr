@@ -1,6 +1,6 @@
 # Ninja Assault VR validation
 
-Release 1.0.0 targets World NJA2 Ver.A. Binary source commit:
+Original release 1.0.0 targeted World NJA2 Ver.A. Binary source commit:
 `c7a94cd021a83ba06811ae2bb69fc4ea32419377`. Public-page updates after that commit
 change documentation and promotional assets only. Physical headset validation
 and later-stage coverage remain pending.
@@ -70,3 +70,18 @@ Physical headset installation, tracking, comfort, sustained performance and full
 later-stage behavior have not been validated. See the
 [headset checklist](ninja-vr-headset-checklist.md) and
 [measured findings](ninja-findings.md).
+
+## Mach Gun update 1.0.1
+
+The later focused investigation identified the gun that the sparse initial survey
+missed. The source now extracts the heroes' actual Mach Gun automatically; see
+the measured target and orientation in ninja-findings.md. Private builder and
+first-run app checks made a complete284236byte cache,64strips,203triangles.
+On this PC first preparation finished at81game seconds/about17wallseconds.
+
+The renderer-cache suite was first RED with six Ninja failures, then GREEN with
+14cases. The original401focused checks and16shared synthetic gun-builder/cache
+cases pass. Source review found no Critical/Important issue. Final runtime cases,
+clean-source artifacts and signed/public download checks are recorded with the
+1.0.1 distribution's validation report. Physical validation of this update remains
+on the headset checklist.

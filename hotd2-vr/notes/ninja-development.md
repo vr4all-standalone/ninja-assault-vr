@@ -2,7 +2,7 @@
 
 ## Scope and status
 
-The initial standalone target is World NJA2 Ver.A, ninjaslt.zip. The base app version is 1.0.0;
+The initial standalone target is World NJA2 Ver.A, ninjaslt.zip. The base app version is 1.0.1;
 Quest identity is com.vrlightgunhub.ninjaassault and the title is Ninja Assault VR. This fork
 preserves the finished CM/Lupin infrastructure but remains experimental. A shared boot ID does
 not authorize another regional revision's memory writes. See [Ninja findings](ninja-findings.md)
@@ -37,12 +37,12 @@ Single-player defaults remain A Start, B Reload, X P2 Start/join and Y Reload (P
 can shoot and transfer P1's single gun before P2 joins. Native free play uses Start directly;
 there is no separate coin action.
 
-The Dual hands setting applies only with two active players. vr.DualP1Left defaults true:
+The Two players setting applies only with two active players. vr.DualP1Left defaults true:
 P1 left/P2 right, X/Y for P1 Start/Reload and A/B for P2 Start/Reload. The opposite choice swaps
 dual assignments. Single-player Start buttons and trigger transfer do not follow this setting.
 Verify held-trigger release gating and relaunch persistence with the final native build.
 
-The thirteen menu rows are Resume, Recenter, Gun, Gun angle, Reload, Dual hands, Laser, Haptics,
+The thirteen menu rows are Resume, Recenter, Gun, Gun angle, Reload, Two players, Laser, Haptics,
 World size, Panel distance, Wider view, How to play, Quit. The shared engine supports either
 pointer, stick repeat, a gun preview and three-second Quit confirmation. Simulation/audio
 pause while head tracking remains live. How to play uses Touch, Index, Vive and WMR labels.
@@ -120,3 +120,12 @@ current source hash. Distribution needs that corresponding source commit.
 
 Publication, headset installation, new keys and automations are outside this port task. Mark
 physical checks only when actually performed in the [headset checklist](ninja-vr-headset-checklist.md).
+
+## Native Mach Gun (1.0.1)
+
+Source::NinjaGun uses the shared neutral attract-gun preparation policy and its
+own gun-na-mach.bin cache. It watches for the complete64-strip texture0x4af000
+gun, separates the two spatial instances at10gameunits and scales it to0.40m.
+Preparation is bounded, Bskips to Arcade for this session, and strict incomplete/
+corrupt-cache checks permit retry. The actual cache is generated from each user's
+own game. Never commit or package it. The labelled menu choice is In-game Mach Gun.

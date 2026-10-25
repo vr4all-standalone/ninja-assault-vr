@@ -29,7 +29,7 @@
   (core\deps\cgltf\LICENSE) in it; -CheckOnly checks that too.
 
   A release is built from a commit, the one its published source is: the working tree must be
-  clean (the gamesdk submodule's local change aside), and the APK's versionName (1.0.0-g<commit>),
+  clean (the gamesdk submodule's local change aside), and the APK's versionName (1.0.1-g<commit>),
   its libflycast.so and flycast.exe must all name HEAD (a -SkipBuild after a new commit fails
   that). -AllowDebugKey test builds skip both checks.
 
@@ -52,7 +52,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 # src\vr\AndroidManifest.xml), its library entry, and the PC zip's start script (hotd2-vr\assets).
 $appId = 'com.vrlightgunhub.ninjaassault'
 $appLabel = 'Ninja Assault VR'
-$appVersion = '1.0.0'
+$appVersion = '1.0.1'
 $appLauncher = 'com.flycast.emulator.NinjaStartActivity'
 $playCmd = 'Play Ninja Assault.cmd'
 
@@ -222,7 +222,7 @@ function Find-AppIdentityFault([string[]]$badgingLines, [string[]]$manifestTree,
     $badging = $badgingLines | Where-Object { $_ -match '^package:' } | Select-Object -First 1
     $wantVersion = [regex]::Escape("$appVersion-g") + $(if ($testBuild) { '[0-9a-f]+' } else { [regex]::Escape($shortHash) })
     if ($badging -notmatch "^package: name='$([regex]::Escape($appId))'") { "the package is not $appId" }
-    if ($badging -notmatch "versionCode='1'") { 'the versionCode is not 1' }
+    if ($badging -notmatch "versionCode='2'") { 'the versionCode is not 2' }
     if ($badging -notmatch "versionName='$wantVersion'") {
         "the versionName is not $appVersion-g$(if ($testBuild) { '<commit>' } else { $shortHash })"
     }
@@ -437,24 +437,25 @@ This build inherits Flycast and mikermak's hotd2-vr (https://github.com/mikermak
 3. Double-click "Play Ninja Assault.cmd". It starts flycast.exe with roms\ninjaslt.zip
    and the archive folder as its working directory, so this copy uses its own emu.cfg.
 
-Single-player controls: A starts P1, B reloads, X starts/joins P2. Either trigger can
+Single-player controls: A starts P1, B/Y reloads, X starts/joins P2. Either trigger can
 shoot and transfer P1's gun to that hand before P2 joins. Native free play uses Start
-directly; there is no separate coin action. The Dual hands setting applies only with two
+directly; there is no separate coin action. The Two players setting applies only with two
 players. Its default is P1 left / P2 right: X/Y are P1 Start/Reload and A/B are P2
 Start/Reload after joining. The opposite choice swaps dual-player hands and labels.
 Left Menu opens settings, left stick click recenters, right stick click toggles laser.
 Grip plus stick up/down changes world size; grip plus stick left/right changes gun size.
 
-The thirteen paused menu rows are Resume, Recenter, Gun, Gun angle, Reload, Dual hands,
+The thirteen paused menu rows are Resume, Recenter, Gun, Gun angle, Reload, Two players,
 Laser, Haptics, World size, Panel distance, Wider view, How to play, Quit. Settings persist;
 Quit needs a second selection. Reload offers Shoot off-screen and Point off-screen.
 Haptics has Off, Light, Medium and Strong. Native gameplay behavior remains under validation.
 
-Arcade, Zapper and user GLB guns remain available. A complete eligible Ninja Assault
-in-game weapon has not yet been located; this build does not promise a completed extracted
-Ninja weapon. No game data or generated gun cache is supplied. Do not reuse another game's
-extracted model as a Ninja gun. Keep incomplete model preparation nonblocking and use the
-bundled fallback when needed.
+The original wood-and-metal Mach Gun is made automatically from your own game on
+first launch. Keep the app open during the short attract-demo preparation. B skips
+to Arcade for this session; the next launch retries. A complete cache is reused;
+incomplete or corrupt caches are regenerated. Both players use this native model.
+Menu > Gun > In-game Mach Gun selects it after another gun. Arcade, Zapper and user
+GLBs remain available. No game data, textures or generated gun cache is supplied.
 
 Without an OpenXR headset, use the desktop window for development. emu.cfg enables VR
 (vr.Xr = yes), OpenGL (pvr.rend = 0) and native depth interpolation.

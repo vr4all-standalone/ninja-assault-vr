@@ -74,8 +74,8 @@ void check(const char *name, const std::vector<uint8_t>& bytes, vr::hands::Sourc
     genericLoads=0;
     source=vr::hands::Source {};
     source.kind=kind;
-    source.guns[1].file="gun-lp-pistol.bin";
-    source.guns[1].wholePolys=24;
+    source.guns[1].file=kind==vr::hands::Source::NinjaGun?"gun-na-mach.bin":"gun-lp-pistol.bin";
+    source.guns[1].wholePolys=kind==vr::hands::Source::NinjaGun?64:24;
     const auto path=std::filesystem::u8path(dataRoot)/source.guns[1].file;
     if(bytes.empty()) std::filesystem::remove(path);
     else { std::ofstream f(path,std::ios::binary|std::ios::trunc); f.write((const char*)bytes.data(),bytes.size()); }
@@ -106,6 +106,23 @@ int main()
     damaged=good; setWord(damaged,104,23);
     check("lupin-wrong-count-never-reaches-renderer",damaged,Source::LupinGun,false,0);
     check("lupin-missing-remains-not-made",{},Source::LupinGun,false,0,true);
+    // Ninja uses the same strict complete-cache boundary, with its own file identity.
+    const auto ninja=Source::NinjaGun;
+    Source native; native.kind=ninja; native.file="hands.bin";
+    native.guns[1].file="gun-na-mach.bin";
+    const bool isolated=native.gunModels() && std::string(native.modelFile())=="gun-na-mach.bin";
+    printf("%s ninja-native-cache-isolation\n",isolated?"PASS":"FAIL"); isolated?++passed:++failed;
+    auto ninjaGood=good; setWord(ninjaGood,104,64);
+    check("ninja-complete-reaches-renderer",ninjaGood,ninja,true,1);
+    damaged=ninjaGood; setWord(damaged,100,ModelGunOnly);
+    check("ninja-incomplete-stays-on-fallback",damaged,ninja,false,0);
+    damaged=ninjaGood; setWord(damaged,8,0x7fc00000);
+    check("ninja-nan-muzzle-never-reaches-renderer",damaged,ninja,false,0);
+    damaged=ninjaGood; damaged.pop_back();
+    check("ninja-truncation-never-reaches-renderer",damaged,ninja,false,0);
+    damaged=ninjaGood; setWord(damaged,104,63);
+    check("ninja-wrong-count-never-reaches-renderer",damaged,ninja,false,0);
+    check("ninja-missing-remains-not-made",{},ninja,false,0,true);
     std::filesystem::remove(dir);
     printf("lupin_render_cache_test: %d passed, %d failed\n",passed,failed);
     return failed?1:0;

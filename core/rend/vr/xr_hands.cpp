@@ -648,7 +648,7 @@ const HandsModel *gunModel(GunKind kind)
 				const std::string path = get_writable_data_path(gun.file);
 				// Lupin's prep and renderer must agree: skipped/rejected caches keep the fallback.
 				// CM still accepts its partial guns under the existing generic-loader policy.
-				if (source->kind == hands::Source::LupinGun && !hands::loadGunCache(path, gun))
+				if (source->attractGun() && !hands::loadGunCache(path, gun))
 					slot.missing = !file_exists(path);
 				else
 					slot.loaded = load(slot.model, path, std::string(), slot.missing);
@@ -680,7 +680,7 @@ const char *gunName(GunKind kind)
 	switch (kind)
 	{
 	case GunKind::Pistol:
-		return "in-game pistol";
+		return gameModelSource() != nullptr && gameModelSource()->kind == hands::Source::NinjaGun ? "in-game Mach Gun" : "in-game pistol";
 	case GunKind::Rifle:
 		return "assault rifle";
 	default:
@@ -805,7 +805,7 @@ std::vector<GunChoice> gunChoices()
 	// (with the game's own models off the pistol isn't made: the row passes it)
 	std::vector<GunChoice> choices;
 	if (gameModelSource() != nullptr)
-		choices.push_back({ 1, "In-game pistol", config::VrGameHands && gunModel(GunKind::Pistol) != nullptr, gunComplete(GunKind::Pistol) });
+		choices.push_back({ 1, gameModelSource()->kind == hands::Source::NinjaGun ? "In-game Mach Gun" : "In-game pistol", config::VrGameHands && gunModel(GunKind::Pistol) != nullptr, gunComplete(GunKind::Pistol) });
 	// the folder guns, whatever vr.GameHands says: the bundled ones first (a skipped one isn't made)
 	refreshOwn();
 	for (size_t i = 0; i < ownGuns.size(); i++)

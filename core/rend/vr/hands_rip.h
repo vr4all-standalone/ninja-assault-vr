@@ -39,21 +39,22 @@ namespace vr::hands
 // and the file it's kept in, in the data directory.
 struct Source
 {
-	enum Kind { None, AgentsPistol, HerosStaff, CmGuns, LupinGun } kind = None;
+	enum Kind { None, AgentsPistol, HerosStaff, CmGuns, LupinGun, NinjaGun } kind = None;
 	const char *file = "";
 	Parts pistol {};		// AgentsPistol: the textures in the game over scene
 	StaffParts staff {};	// HerosStaff: the textures in the attract demo and the story's intro
 	// CmGuns: the guns, each its own file (unused: no file). guns[0] is none (1.1's cabinet gun's;
 	// the slot stays so guns[kind - 1] lines up with xr_hands.h GunKind), guns[1] the agents' pistol.
 	GunTarget guns[3] {};
-	// LupinGun: watch the neutral attract sequence until a complete gun appears.
+	// LupinGun/NinjaGun: watch the neutral attract sequence until a complete gun appears.
 	float prepSeconds = 180.f;
-	bool gunModels() const { return kind == CmGuns || kind == LupinGun; }
+	bool attractGun() const { return kind == LupinGun || kind == NinjaGun; }
+	bool gunModels() const { return kind == CmGuns || attractGun(); }
 	// The file modelPath() names (CmGuns: the agents' pistol's, the one the run is for, for the
 	// "made before" line; the headset reads each gun's own file: xr_hands.h gunModel())
 	const char *modelFile() const { return gunModels() ? guns[1].file : file; }
 	const char *name() const {
-		return kind == LupinGun ? "the in-game pistol" : kind == CmGuns ? "the guns" : kind == HerosStaff ? "the hero's staff" : "the agent's hands and pistol";
+		return kind == NinjaGun ? "the Mach Gun" : kind == LupinGun ? "the in-game pistol" : kind == CmGuns ? "the guns" : kind == HerosStaff ? "the hero's staff" : "the agent's hands and pistol";
 	}
 };
 

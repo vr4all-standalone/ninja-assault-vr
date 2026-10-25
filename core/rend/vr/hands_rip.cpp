@@ -89,7 +89,7 @@ std::atomic<bool> newModel, skipRequested;
 std::atomic<float> progress;
 std::atomic<bool> staffRun;	// the run is for the hero's staff
 std::atomic<bool> cmRun;	// ...for Confidential Mission's guns
-std::atomic<bool> lupinRun;	// ...for Lupin's neutral attract-sequence pistol
+std::atomic<bool> attractRun;	// ...for a neutral attract-sequence gun
 // Confidential Mission's guns (Source::guns): made (or not wanted), and the pass a try at one
 // that isn't merged failed (gunMutex)
 std::atomic<bool> gunDone[3];
@@ -131,11 +131,11 @@ std::string gunPath(const GunTarget& gun) {
 	return get_writable_data_path(gun.file);
 }
 
-// Lupin retries incomplete/corrupt final caches; other games retain their existing policy.
+// Attract-gun games retry incomplete/corrupt final caches; other policies stay unchanged.
 bool gunCached(const Source& source, const GunTarget& gun)
 {
 	const std::string path = gunPath(gun);
-	return source.kind == Source::LupinGun ? loadGunCache(path, gun) : file_exists(path);
+	return source.attractGun() ? loadGunCache(path, gun) : file_exists(path);
 }
 
 bool haveModel()
@@ -207,7 +207,7 @@ void onStart()
 	if (source == nullptr || !config::VrGameHands)
 		return;
 	cmRun = source->kind == Source::CmGuns;
-	lupinRun = source->kind == Source::LupinGun;
+	attractRun = source->attractGun();
 	const bool watchOnly = haveModel();
 	if (watchOnly)
 	{
@@ -228,7 +228,7 @@ void onStart()
 		for (int i = 0; i < 3; i++)
 		{
 			const GunTarget& gun = source->guns[i];
-			gunDone[i] = !(cmRun || lupinRun) || !gun.used() || gunCached(*source, gun);
+			gunDone[i] = !(cmRun || attractRun) || !gun.used() || gunCached(*source, gun);
 			gunFailedAt[i] = 0;
 			std::vector<Rip>().swap(gunCaptures[i]);
 			gunSeen[i] = false;
@@ -275,8 +275,8 @@ void onStart()
 		NOTICE_LOG(RENDERER, "VR hands: no model yet, running the attract demo for the hero's staff (%s)", modelPath().c_str());
 	else if (cmRun)
 		NOTICE_LOG(RENDERER, "VR hands: no model yet, taking the guns from the game");
-	else if (lupinRun)
-		NOTICE_LOG(RENDERER, "VR hands: no model yet, watching the attract demo for the in-game pistol");
+	else if (attractRun)
+		NOTICE_LOG(RENDERER, "VR hands: no model yet, watching the attract demo for %s", source->name());
 	else
 		NOTICE_LOG(RENDERER, "VR hands: no model yet, running the game to its game over scene for it");
 }
@@ -302,16 +302,16 @@ void onVBlank()
 				if (source->guns[i].attractBy <= 0.f)
 					gunDone[i] = true;
 		}
-		stopPrep("skipped", lupinRun || (cmRun && !watch) ? Off : Watching);
+		stopPrep("skipped", attractRun || (cmRun && !watch) ? Off : Watching);
 		if (watch)
 			logWatched(*source);
 		return;
 	}
 	const double now = gameSeconds() - startedAt;
-	if (lupinRun)
+	if (attractRun)
 	{
 		const Source *source = gameModelSource();
-		if (source == nullptr || source->kind != Source::LupinGun)
+		if (source == nullptr || !source->attractGun())
 		{
 			stopPrep("stopped", Off);
 			return;
@@ -323,7 +323,7 @@ void onVBlank()
 		// whatever attract scene supplies them. The timeout is a bound, not a scene identity.
 		lightgunSet(0, OffScreen, OffScreen, 0);
 		if (now >= limit)
-			stopPrep("no complete in-game pistol appeared (gave up)", Watching);
+			stopPrep("no complete in-game gun appeared (gave up)", Watching);
 		return;
 	}
 	if (cmRun)
@@ -556,7 +556,7 @@ bool saveGun(const GunTarget& gun, int i, const std::vector<u8>& model, u32 poly
 {
 	const std::string path = gunPath(gun);
 	const Source *source = gameModelSource();
-	const bool lupin = source != nullptr && source->kind == Source::LupinGun;
+	const bool lupin = source != nullptr && source->attractGun();
 	if (!(lupin ? saveGunCache(model, path, gun) : save(model, path)))
 	{
 		WARN_LOG(RENDERER, "VR hands: can't write %s", path.c_str());
@@ -719,7 +719,7 @@ void observeGuns(const rend_context& ctx, const RenderPass& pass, const RenderPa
 		const GunTarget& gun = source.guns[i];
 		if (gunDone[i])
 			continue;
-		if (gun.merge && source.kind != Source::LupinGun)
+		if (gun.merge && !source.attractGun())
 		{
 			// only in the run, from the stage 1 intro's part of it on
 			if (state == Preparing && cmCapturing && !gunOver[i])

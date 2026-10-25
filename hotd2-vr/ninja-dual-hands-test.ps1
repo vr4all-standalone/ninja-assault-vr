@@ -21,7 +21,7 @@ function ProductionFunction([string]$Source,[string]$Signature){
 $code=@()
 $defaultEnabled=$optionSource -match 'Option<bool>\s+VrDualP1Left\("vr\.DualP1Left",\s*true\)'
 $oldSettingUsed=$hostSource -match 'config::VrP1Hand'
-$menuNamed=$menuSource.Contains('"Dual hands"')
+$menuNamed=$menuSource.Contains('"Two players"')
 $code+="constexpr bool defaultEnabled=$($defaultEnabled.ToString().ToLower()), oldSettingUsed=$($oldSettingUsed.ToString().ToLower()), menuNamed=$($menuNamed.ToString().ToLower());"
 $code+=ProductionFunction $hostSource 'int p1Hand()'
 $code+=ProductionFunction $hostSource 'bool triggerHeld(const Gun& g, float pull)'

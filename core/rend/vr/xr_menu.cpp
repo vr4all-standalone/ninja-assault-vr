@@ -28,7 +28,7 @@ namespace
 constexpr float Distance = 1.2f, BelowEyes = 0.1f;
 constexpr int Left = 0, Right = 1;
 
-const char *const Labels[Rows] { "Resume", "Recenter", "Gun", "Gun angle", "Reload", "Dual hands", "Laser", "Haptics",
+const char *const Labels[Rows] { "Resume", "Recenter", "Gun", "Gun angle", "Reload", "Two players", "Laser", "Haptics",
 		"World size", "Panel distance", "Wider view", "How to play", "Quit" };
 const char *const HapticsNames[4] { "Off", "Light", "Medium", "Strong" };
 // vr.Haptics' words, saved by the Haptics row (hapticsLevel() reads them, and 1.2's numbers)
