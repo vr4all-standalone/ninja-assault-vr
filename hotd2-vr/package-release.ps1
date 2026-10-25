@@ -1,17 +1,17 @@
 <#
-  Packages Lupin the Third VR builds for the Quest and PC (implementation remains in progress)
+  Packages Ninja Assault VR builds for the Quest and PC (implementation remains in progress)
   in dist\ (packaging checks do not establish gameplay or headset validation):
 
-    lupin-the-third-vr-quest.apk   the Quest app (Quest 3, 3S, 2, Pro)
-    lupin-the-third-vr-pcvr.zip    the PC version with VR on (flycast.exe, emu.cfg, README.txt,
-                                        LICENSE.txt, Play Lupin the Third.cmd; with the bundled
+    ninja-assault-vr-quest.apk   the Quest app (Quest 3, 3S, 2, Pro)
+    ninja-assault-vr-pcvr.zip    the PC version with VR on (flycast.exe, emu.cfg, README.txt,
+                                        LICENSE.txt, Play Ninja Assault.cmd; with the bundled
                                         models also CREDITS.txt and data\models\)
 
   Neither holds anything of the game: the players bring their own, and what the app makes from it
-  is made on the spot. Both are checked for that (the names in their file lists: discs, keys,
+  is made on the spot. Both are checked for that (the names in their file lists: cartridge ROMs, BIOS, discs, keys,
   rips, frame grabs, models made from a game), and the APK for its signer: signed with the public
   debug key (no release key, see make-release-key.ps1) it is refused, since anyone could sign an
-  "update" of the app with that key. The APK is also checked for being Lupin the Third VR
+  "update" of the app with that key. The APK is also checked for being Ninja Assault VR
   (its package, version and label, and its start screen the only entry in the headset's library),
   and the zip for holding exactly its files, with a README.txt that names no other game.
 
@@ -38,8 +38,8 @@
   .\package-release.ps1 -AllowDebugKey   take a debug-signed APK too (a test build, not for release)
   .\package-release.ps1 -CheckOnly a.zip,b.apk   only check these archives' contents
 
-  Uses the Android SDK's build-tools (ANDROID_HOME, default %LOCALAPPDATA%\Android\Sdk) and a JDK
-  (JAVA_HOME, or a Microsoft JDK 17 in Program Files), as build-quest.cmd does.
+  Uses the Android SDK build-tools and a JDK. Explicit ANDROID_HOME and JAVA_HOME take
+  priority; local E: toolchain fallbacks match build-quest.cmd.
 #>
 param([switch]$SkipBuild, [switch]$AllowDebugKey, [string[]]$CheckOnly)
 $ErrorActionPreference = 'Stop'
@@ -50,17 +50,17 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 # The app: its application ID, label and version (shell\android-studio\flycast\build.gradle.kts and
 # src\vr\AndroidManifest.xml), its library entry, and the PC zip's start script (hotd2-vr\assets).
-$appId = 'com.vrlightgunhub.lupin'
-$appLabel = 'Lupin the Third VR'
+$appId = 'com.vrlightgunhub.ninjaassault'
+$appLabel = 'Ninja Assault VR'
 $appVersion = '1.0.0'
-$appLauncher = 'com.flycast.emulator.LupinStartActivity'
-$playCmd = 'Play Lupin the Third.cmd'
+$appLauncher = 'com.flycast.emulator.NinjaStartActivity'
+$playCmd = 'Play Ninja Assault.cmd'
 
 # What must never be in a release: game discs and keys, rips (rip\), frame grabs, models made
 # from a game (the app makes those on the player's device, from the player's game), and archives
 # or disc images inside it (a ROM set, a BIOS zip). Signing material stays private too.
 $bannedNames = '*.chd', '*.gdi', '*.cue', '*.cdi', '*.pic', 'shot_*.png', 'hands*.bin', 'staff*.bin', 'HND1*.bin',
-	'gun-*.bin', '*.zip', '*.7z', '*.rar', '*.iso', '*.jks', '*.keystore', 'release-signing.properties'
+	'gun-*.bin', 'nja?vera.*', 'nja1ma*.*', 'jyu1_prg0a.ic3', 'epr-2157*.ic27', '*.zip', '*.7z', '*.rar', '*.iso', '*.jks', '*.keystore', 'release-signing.properties'
 $bannedDirs = 'rip', '.vrlightgunhub'
 
 # The entries of a zip or APK whose names are on the lists above.
@@ -231,7 +231,7 @@ function Find-AppIdentityFault([string[]]$badgingLines, [string[]]$manifestTree,
     if ($launchers.Count -ne 1 -or $launchers[0] -ne $appLauncher) {
         "the library entries (LAUNCHER) are '$($launchers -join "', '")', not $appLauncher alone"
     }
-    if (@($manifestTree | Where-Object { $_ -match 'VrSetupActivity|CmStartActivity' }).Count) { 'the manifest still has an older setup activity' }
+    if (@($manifestTree | Where-Object { $_ -match 'VrSetupActivity|CmStartActivity|LupinStartActivity' }).Count) { 'the manifest still has an older setup activity' }
     if (-not @($manifestTree | Where-Object { $_ -match '"com\.oculus\.permission\.RENDER_MODEL"' }).Count) {
         'the manifest has no com.oculus.permission.RENDER_MODEL (the controllers drawn in the hands)'
     }
@@ -248,11 +248,14 @@ function Find-PcArchiveFault([string]$archive, [string[]]$expectedFiles) {
     }
     $readmeBytes = Read-ZipEntry $archive 'README.txt'
     $readme = if ($readmeBytes) { [Text.Encoding]::ASCII.GetString($readmeBytes) } else { '' }
-    foreach ($required in @($appLabel, 'roms\lupinshoo.zip', 'roms\lupinshoo\gds-0018.chd', 'roms\naomi.zip', $playCmd)) {
+    foreach ($required in @($appLabel, 'World NJA2 Ver.A', 'Implementation in progress.', 'roms\ninjaslt.zip', 'roms\naomi.zip', $playCmd)) {
         if (-not $readme.Contains($required)) { "README.txt does not name $required" }
     }
-    foreach ($other in @('Light Gun Hub', 'House of the Dead', 'Maze of the Kings', 'Confidential Mission')) {
+    foreach ($other in @('Light Gun Hub', 'House of the Dead', 'Maze of the Kings', 'Confidential Mission', 'Lupin')) {
         if ($readme -match [regex]::Escape($other)) { "README.txt names $other; its play instructions must be for $appLabel" }
+    }
+    if ($readme -match '(?i)\.(?:chd|gdi|cue|pic)\b|\bgds-[0-9a-z]+\b') {
+        'README.txt has disc-era setup instructions; Ninja Assault requires its cartridge ZIP and BIOS'
     }
     $configBytes = Read-ZipEntry $archive 'emu.cfg'
     $config = if ($configBytes) { [Text.Encoding]::ASCII.GetString($configBytes) } else { '' }
@@ -262,7 +265,7 @@ function Find-PcArchiveFault([string]$archive, [string[]]$expectedFiles) {
     $launcherBytes = Read-ZipEntry $archive $playCmd
     $launcher = if ($launcherBytes) { [Text.Encoding]::ASCII.GetString($launcherBytes) } else { '' }
     if ($launcher -notmatch 'start\s+""\s+/D\s+"%~dp0"' -or -not $launcher.Contains('"%~dp0flycast.exe"') -or
-        -not $launcher.Contains('"%~dp0roms\lupinshoo.zip"')) { "$playCmd does not launch the original set with a portable working directory" }
+        -not $launcher.Contains('"%~dp0roms\ninjaslt.zip"')) { "$playCmd does not launch the World cartridge set with a portable working directory" }
 }
 # the working tree as committed (the gamesdk submodule's local change aside)
 $head = Invoke-Git rev-parse HEAD
@@ -277,14 +280,17 @@ if (-not $AllowDebugKey) {
 if (-not (Test-ModelsUntracked)) { exit 1 }
 
 # the SDK's newest build-tools and a JDK, as build-quest.cmd finds them
-$sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
+$sdk = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif (Test-Path -LiteralPath 'E:\AndroidSdk') { 'E:\AndroidSdk' } else { Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
 $tools = Get-ChildItem (Join-Path $sdk 'build-tools') -Directory -ErrorAction SilentlyContinue |
 	Where-Object { Test-Path (Join-Path $_.FullName 'apksigner.bat') } |
 	Sort-Object { [version]($_.Name -replace '[^0-9.].*$', '') } -Descending | Select-Object -First 1
 if (-not $tools) { Write-Host "No build-tools with apksigner in $sdk (set ANDROID_HOME)." -ForegroundColor Red; exit 1 }
-$jdk = @(Get-ChildItem (Join-Path $env:ProgramFiles 'Microsoft') -Directory -Filter 'jdk-17*' -ErrorAction SilentlyContinue |
-	ForEach-Object { $_.FullName }) + @($env:JAVA_HOME) |
-	Where-Object { $_ -and (Test-Path (Join-Path $_ 'bin\keytool.exe')) } | Select-Object -First 1
+$jdk = @($env:JAVA_HOME) + @('E:\UnityEd\6000.0.78f1\Editor\Data\PlaybackEngines\AndroidPlayer\OpenJDK') +
+    @(Get-ChildItem (Join-Path $env:ProgramFiles 'Microsoft') -Directory -Filter 'jdk-17*' -ErrorAction SilentlyContinue |
+        ForEach-Object { $_.FullName }) +
+    @(Get-ChildItem 'E:\_androidtools\tmp\jdk' -Directory -Filter 'jdk-*' -ErrorAction SilentlyContinue |
+        ForEach-Object { $_.FullName }) |
+    Where-Object { $_ -and (Test-Path (Join-Path $_ 'bin\keytool.exe')) } | Select-Object -First 1
 if (-not $jdk) { Write-Host 'No JDK found (set JAVA_HOME).' -ForegroundColor Red; exit 1 }
 $env:JAVA_HOME = $jdk   # this process only: apksigner.bat runs on it
 
@@ -301,9 +307,9 @@ if (-not $SkipBuild) {
 	if ($LASTEXITCODE -ne 0) { throw 'build-quest.cmd failed' }
 }
 New-Item -ItemType Directory -Force $dist | Out-Null
-$apkOut = Join-Path $dist 'lupin-the-third-vr-quest.apk'
-$zip = Join-Path $dist 'lupin-the-third-vr-pcvr.zip'
-$stage = Join-Path $dist 'lupin-the-third-vr-pcvr'
+$apkOut = Join-Path $dist 'ninja-assault-vr-quest.apk'
+$zip = Join-Path $dist 'ninja-assault-vr-pcvr.zip'
+$stage = Join-Path $dist 'ninja-assault-vr-pcvr'
 foreach ($f in $apkOut, $zip) { if (Test-Path $f) { (Get-Item $f).Delete() } }   # never leave an old one
 
 # the Quest app: who signed it
@@ -412,39 +418,48 @@ rend.NativeDepthInterpolation = yes
 vr.Xr = yes
 '@
 $readme = @'
-Lupin the Third VR, PC development build
+Ninja Assault VR, experimental PC development build
 
-Implementation in progress. The CM 1.2 feature set is ported with Lupin-specific camera,
-calibration, native shot state and gun extraction. Physical headset validation and later-stage
-coverage remain pending. See the source validation report and physical headset checklist.
+Implementation in progress. World NJA2 Ver.A is the initial research target. The inherited
+menus, gun choices and controller features are being adapted to measured Ninja Assault state.
+Camera, aiming, shot feedback, reloads, P2 transitions and later-stage coverage require the
+current source validation results; physical headset testing remains outstanding.
+Check hotd2-vr/notes/ninja-findings.md and ninja-validation.md in the corresponding source.
 This build inherits Flycast and mikermak's hotd2-vr (https://github.com/mikermak/hotd2-vr).
-Check the source README and Lupin findings for the current verified scope.
 
-1. Make a folder named roms next to flycast.exe and add your own original MAME set lupinshoo:
-     roms\lupinshoo.zip             the original game, with 317-0325-jpn.pic inside
-     roms\lupinshoo\gds-0018.chd    original GDS-0018 disc
-     roms\naomi.zip                 supported NAOMI BIOS, or its BIOS file in lupinshoo.zip
-   A complete gds-0018.cue or gds-0018.gdi with all its tracks may replace the CHD.
-   Raw CUE/GDI boot is untested. Rev A uses lupinsho/gds-0018a and is not supported.
-   The original CHD header SHA1 is 3b7d5dd917b9a2cc9b7b51aad22f8e75383c3301.
+1. Make a folder named roms next to flycast.exe and add your own complete World MAME set:
+     roms\ninjaslt.zip    World NJA2 Ver.A cartridge set; keep it packed
+     roms\naomi.zip       supported NAOMI BIOS, or its BIOS file inside ninjaslt.zip
+   All 12 required cartridge ROMs must be present with matching sizes and CRC metadata.
+   Regional clones are not supported initially. Do not rename a clone into the World set.
    Keep original files untouched; use a separate correctly named copy for this app.
 2. Connect the headset to the active OpenXR runtime (for example SteamVR or Quest Link).
-3. Double-click "Play Lupin the Third.cmd". It starts flycast.exe with roms\lupinshoo.zip
+3. Double-click "Play Ninja Assault.cmd". It starts flycast.exe with roms\ninjaslt.zip
    and the archive folder as its working directory, so this copy uses its own emu.cfg.
 
-Controls: trigger shoots, A is P1 Start, B is P1 Reload;
-X is P2 Start and Y is P2 Reload by default. Hands swaps the players and labels; with two
-players active their guns/reload buttons swap too. Left Menu opens settings, left stick click recenters,
-right stick click toggles the laser. The paused menu includes gun choice/angle, both reload
-modes, Hands, haptics Off/Light/Medium/Strong, world size, panel distance, wider view,
-How to play and confirmed Quit. Hands are empty during noninteractive story scenes.
-First start makes a complete pistol from your own game. B skips; a later start retries.
-P1 has seven rounds, P2 six; native accepted rounds drive recoil/flash/haptics. No game data
-or generated gun cache is supplied.
+Single-player controls: A starts P1, B reloads, X starts/joins P2. Either trigger can
+shoot and transfer P1's gun to that hand before P2 joins. Native free play uses Start
+directly; there is no separate coin action. The Dual hands setting applies only with two
+players. Its default is P1 left / P2 right: X/Y are P1 Start/Reload and A/B are P2
+Start/Reload after joining. The opposite choice swaps dual-player hands and labels.
+Left Menu opens settings, left stick click recenters, right stick click toggles laser.
+Grip plus stick up/down changes world size; grip plus stick left/right changes gun size.
+
+The thirteen paused menu rows are Resume, Recenter, Gun, Gun angle, Reload, Dual hands,
+Laser, Haptics, World size, Panel distance, Wider view, How to play, Quit. Settings persist;
+Quit needs a second selection. Reload offers Shoot off-screen and Point off-screen.
+Haptics has Off, Light, Medium and Strong. Native gameplay behavior remains under validation.
+
+Arcade, Zapper and user GLB guns remain available. A complete eligible Ninja Assault
+in-game weapon has not yet been located; this build does not promise a completed extracted
+Ninja weapon. No game data or generated gun cache is supplied. Do not reuse another game's
+extracted model as a Ninja gun. Keep incomplete model preparation nonblocking and use the
+bundled fallback when needed.
+
 Without an OpenXR headset, use the desktop window for development. emu.cfg enables VR
 (vr.Xr = yes), OpenGL (pvr.rend = 0) and native depth interpolation.
 
-No game is included. Unofficial fan project, not affiliated with Sega.
+No game is included. Unofficial fan project, not affiliated with Namco, Sega or Meta.
 
 Credits: Flycast by flyinghead and contributors (https://github.com/flyinghead/flycast,
 GPL-2.0-or-later). hotd2-vr by mikermak (GPL-2.0-or-later).
@@ -477,12 +492,12 @@ try {
 	}
 } finally { $archive.Dispose(); $out.Dispose() }
 
-# The zip contains exactly its files, portable defaults and launcher, and Lupin's own instructions.
+# The zip contains exactly its files, portable defaults and launcher, and Ninja Assault's own instructions.
 $zipFiles = @('flycast.exe', 'emu.cfg', 'README.txt', 'LICENSE.txt', $playCmd) + $modelFiles
 $zipFaults = @(Find-PcArchiveFault $zip $zipFiles)
 $zipGood = $zipFaults.Count -eq 0
 if ($zipGood) {
-    Write-Host "zip check: $(Split-Path -Leaf $zip) holds exactly $($zipFiles -join ', '), with Lupin instructions and portable defaults"
+    Write-Host "zip check: $(Split-Path -Leaf $zip) holds exactly $($zipFiles -join ', '), with Ninja Assault instructions and portable defaults"
 } else {
     $zipFaults | ForEach-Object { Write-Host "zip check: $_" -ForegroundColor Red }
 }

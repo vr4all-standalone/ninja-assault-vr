@@ -1,203 +1,147 @@
-<div align="center">
+# Ninja Assault VR
 
-<img src="hotd2-vr/assets/readme-banner.jpg" alt="Lupin the Third VR — experimental Quest and PC VR port" width="100%" />
+An experimental standalone Meta Quest and PC OpenXR port of **Ninja Assault**, built from
+Flycast and the completed Confidential Mission and Lupin VR work. The initial game target is
+**World NJA2 Ver.A**, MAME/Flycast set **ninjaslt**.
 
-# Lupin the Third VR
-### Sega NAOMI Light-Gun Adventure · Standalone Meta Quest & PC VR
+**Implementation in progress.** The shared VR menus, controllers and model infrastructure are
+inherited. Ninja-specific camera, aiming, native shot feedback, reloads, player transitions and
+later-stage behavior must be assessed against the current validation evidence. Full feature
+parity is not complete. Physical Quest and PC VR headset testing remains outstanding.
 
-[![Release v1.0.0](https://img.shields.io/badge/Release-v1.0.0_Experimental-d44c65?style=for-the-badge)](../../releases)
-[![Quest and PC VR](https://img.shields.io/badge/Headset-Quest_%C2%B7_PC_VR_OpenXR-blue?style=for-the-badge)](#installation)
-[![Original game required](https://img.shields.io/badge/Your_Game-lupinshoo_GDS--0018-orange?style=for-the-badge)](#what-you-need)
+This project includes no game, BIOS or extracted game model. Use your own files. It is an
+unofficial fan project, not affiliated with Namco, Sega, Meta or the Flycast project. The CM and
+Lupin reference projects and their settings are independent of this app.
 
-**[⬇️ Quest APK](../../releases/latest/download/lupin-the-third-vr-quest.apk)** · **[🖥️ PC VR ZIP](../../releases/latest/download/lupin-the-third-vr-pcvr.zip)** · **[🎮 Controls](#controls)**
+## Game files
 
-**[🌐 VR4ALL — Standalone VR Mod Installer](https://github.com/vr4all-standalone/vr4all-standalone-vr-mod-installer)**
+Use the complete **World NJA2 Ver.A cartridge set** and a supported NAOMI BIOS. Keep the ZIP
+packed and retain the canonical lowercase filenames. Regional clones are not supported in the
+initial standalone setup; renaming one to ninjaslt.zip does not make it the World revision.
 
-</div>
+| File | Quest location | PC portable location |
+|---|---|---|
+| ninjaslt.zip | Download/ninjaslt.zip | roms/ninjaslt.zip |
+| naomi.zip | Download/naomi.zip | roms/naomi.zip |
 
----
+A supported BIOS may instead be inside the game ZIP. All 12 required cartridge entries need
+matching uncompressed sizes and CRC metadata. The Quest setup checks ZIP central-directory
+metadata, rejects incomplete or malformed sets and conflicting known BIOS entries, and keeps
+Play disabled until ready. This does not hash every payload byte or certify full integrity.
+Keep your originals untouched and prepare a separate copy for this app.
 
-## Overview
+## Quest
 
-**Lupin the Third VR** brings **Lupin the Third: The Shooting** to a standalone Meta Quest
-or a PC VR headset. The original NAOMI game runs in Flycast; its scenes are reconstructed
-in stereo around you, and your tracked controllers become the light guns.
+Target artifact: **ninja-assault-vr-quest.apk**. App: **Ninja Assault VR**,
+package **com.vrlightgunhub.ninjaassault**, base version **1.0.0**.
 
-It carries over the menus and features of **[Confidential Mission VR](https://github.com/vr4all-standalone/confidential-mission-vr)**,
-using Lupin's own measured camera, aiming calibration, player state and extracted handgun.
-Both projects build on **[mikermak's VR fork of Flycast](https://github.com/mikermak/hotd2-vr)**,
-itself based on **[Flycast](https://github.com/flyinghead/flycast)**.
+Quest 3 is the primary target; Quest 3S, Quest 2 and Quest Pro remain compatibility targets
+pending physical checks. Use a local APK produced by this source. No public release or
+installer listing is implied by this development tree.
 
-> **No game included.** You need your own original **GDS-0018** game and NAOMI BIOS.
-> This is an unofficial fan project, not affiliated with Sega, Meta, the Lupin rights
-> holders or the Flycast project. No ROM, disc, PIC, game graphics or sound is supplied.
+For manual setup, enable developer mode and install the APK with your preferred sideloading
+tool. Copy your own files to the Download layout above. Open Ninja Assault VR under Unknown
+sources, choose **Allow** if All files access is needed, then **Look again** and **Play** when
+READY. Files in the app's own games folder do not need shared-storage access. Quit in VR returns
+to the setup panel; Play starts a fresh game process.
 
-**Status: experimental.** Windows and Quest builds, simulator gameplay, aiming, menus
-and reload checks pass. **This Lupin port has not been tested on a physical headset.**
-Tracking, comfort, sustained performance and later stages still need hands-on validation.
-
-## Key VR Features
-
-- **Stereo 3D and tracked viewing.** Move and turn your head inside reconstructed scenes.
-  Wider view draws extra scenery while preserving the original game's hit-test lens.
-  HUD, subtitles and instructions sit on a panel in front of you.
-- **Your controller is the light gun.** Choose the handgun extracted from your own game,
-  the Arcade gun, the Zapper, or your own GLB. Gun angle adjusts from **−30° to +30°**.
-- **Feedback matches real rounds.** Recoil, muzzle flash and haptics happen when the game
-  fires. Empty magazines give a click without a firing kick. Haptics offers
-  **Off, Light, Medium and Strong**.
-- **Two players on one headset.** P2 joins with the other controller, with a separate gun,
-  magazine, lives and score. **Hands** assigns P1 to the left or right controller.
-- **Two reload modes.** Shoot away from the view, or just point away once per exit.
-  **B/Y** reload too. P1 has seven rounds; P2 has six.
-- **Empty hands in story scenes.** Guns, controllers and lasers disappear during
-  noninteractive movies and return when play resumes.
-- **A paused menu in the headset.** Choose guns, angle, reload, hands, laser, haptics,
-  world size, panel distance and wider view. Settings save immediately. How to play
-  shows labelled controllers, and Quit needs a second selection.
-- **A start screen that checks your files.** See READY or which file needs attention
-  before Play enables. Separate app identity, settings and saves let it coexist with CM.
-
-<a id="installation"></a>
-## Installation on Meta Quest
-
-Quest 3 is the primary target. Quest 3S, Quest 2, Quest Pro and PC VR are inherited
-compatibility targets; physical validation is pending for this Lupin port.
-
-<a id="what-you-need"></a>
-### What you need
-
-Use the **original GDS-0018**, MAME/Flycast set **`lupinshoo`**.
-**Rev A (`lupinsho`, `gds-0018a`) is not supported.** Renaming a Rev A disc does not turn
-it into the original revision.
-
-| File | Where it goes on the Quest |
-| :--- | :--- |
-| `lupinshoo.zip`, with `317-0325-jpn.pic` inside | `Download/lupinshoo.zip` — keep it packed |
-| Original `gds-0018.chd` | `Download/lupinshoo/gds-0018.chd` |
-| `naomi.zip` | `Download/naomi.zip`, unless a supported BIOS is already inside the game ZIP |
-
-The app checks the CHD header against the original revision. Its combined header SHA-1 is
-`3b7d5dd917b9a2cc9b7b51aad22f8e75383c3301`. These are structural/header checks, not a scan
-of every game byte. Keep the canonical lowercase paths.
-
-### 1. Enable developer mode
-
-Enable developer mode for your Quest in the Meta Horizon app and connect it to your PC by USB.
-Allow USB debugging on the headset. If you already use VR4ALL or SideQuest, this may be set up.
-
-### 2. Install with VR4ALL
-
-**[Get VR4ALL](https://github.com/vr4all-standalone/vr4all-standalone-vr-mod-installer)**,
-open the latest build, select **Lupin the Third VR** and provide your own three files above.
-
-VR4ALL downloads the Quest APK, installs it, enables All files access and copies your
-files to the correct folders. It does not supply the game or BIOS.
-
-**Or by hand:** download the [Quest APK](../../releases/latest/download/lupin-the-third-vr-quest.apk)
-and install it with SideQuest, or ADB:
-
-```sh
-adb install -r lupin-the-third-vr-quest.apk
-adb shell appops set com.vrlightgunhub.lupin MANAGE_EXTERNAL_STORAGE allow
-```
-
-Copy your own files to the Download layout above. The app also recognizes complete
-original-named CUE/GDI sets with all tracks; **raw CUE/GDI boot remains untested**.
-The VR4ALL recipe uses CHD.
-
-### 3. Play
-
-Open **Lupin the Third VR** under **Unknown sources**. Use **Allow** if it needs file access,
-**Look again** to rescan, then **Play** when READY. Quit from VR returns to this screen.
-
-First launch watches the attract demo to prepare a handgun from your own game.
-**B skips** preparation for that launch and uses the Arcade gun; a later launch retries.
-Completed caches are reused and incomplete caches regenerate. The captured model is the
-train guards' handgun, not a claim to be Lupin's personal Walther. No extracted game model
-comes with the release.
-
-Package: `com.vrlightgunhub.lupin`. Updates retain this app's settings and saves.
+Installation and physical lifecycle checks must be performed separately; building an APK does
+not establish them. Settings and saves live under this app's own Android package.
 
 ## PC VR
 
-1. Download the [PC VR ZIP](../../releases/latest/download/lupin-the-third-vr-pcvr.zip) and unpack it.
-2. Add your own files beside `flycast.exe`:
+Target artifact: **ninja-assault-vr-pcvr.zip**. Unpack it into a separate folder, add your own files,
+and launch **Play Ninja Assault.cmd**:
 
-   ```text
-   roms/
-       lupinshoo.zip
-       lupinshoo/gds-0018.chd
-       naomi.zip
-   ```
+```text
+flycast.exe
+emu.cfg
+Play Ninja Assault.cmd
+roms/
+    ninjaslt.zip
+    naomi.zip
+```
 
-3. Connect your headset to the active OpenXR runtime, such as SteamVR or Quest Link.
-4. Run **Play Lupin the Third.cmd**.
+The launcher uses this folder as its working directory and selects the World set. The portable
+configuration enables OpenGL, native depth interpolation and OpenXR. Connect the headset to
+the active OpenXR runtime before launch. Licensed bundled models, their CREDITS.txt and the
+software licence accompany packaged builds; game data and generated caches do not.
 
-The archive includes portable settings, licensed gun/controller models, credits and the
-software licence. It includes no game files. Physical PC VR headset use remains untested.
-
-<a id="controls"></a>
 ## Controls
 
-Default Quest Touch assignment:
+Single-player keeps the normal Start buttons and trigger-to-transfer behavior:
 
-| Input | Action |
-| :--- | :--- |
-| Right A / B | P1 Start / P1 Reload |
-| Left X / Y | P2 Start or join / P2 Reload |
-| Trigger | Shoot; either hand can hold P1's single gun before P2 joins |
-| Left Menu | Open/close the paused settings menu |
+| Quest Touch input | Single-player action |
+|---|---|
+| A / B | P1 Start / Reload |
+| X / Y | P2 Start or join / Reload |
+| Either trigger | Shoot; transfer P1's single gun to that hand |
+| Left Menu | Open or close paused settings |
 | Left stick click | Recenter |
 | Right stick click | Toggle laser |
 | Grip + stick up/down | World size |
 | Grip + stick left/right | Gun size |
 | Stick | Game D-pad |
 
-**Hands** swaps the players: P1 left uses X/Y, P2 right uses A/B. With two players active,
-changing Hands swaps their guns after the menu closes; a held trigger waits for release.
-Touch, Index, Vive and WMR have their own labels and bindings. How to play shows them,
-with Trigger above Stick where present.
+Native free play starts through Start; there is no separate coin action.
 
-## The menu
+**Dual hands** applies only after two players are active. Its default is **P1 left / P2 right**:
+X/Y then control P1 Start/Reload and A/B control P2 Start/Reload. The opposite option assigns
+P1 right/P2 left. This choice does not change single-player Start buttons or trigger transfer.
+Touch, Index, Vive and WMR use their controller-specific labels and bindings.
 
-**Resume · Recenter · Gun · Gun angle · Reload · Hands · Laser · Haptics · World size ·
-Panel distance · Wider view · How to play · Quit**
+## Menu and inherited features
 
-Either hand can point and select; stick navigation and repeat work too. Game and audio
-pause while head tracking stays live. Menu pointers remain visible with Laser off.
-Quit needs a second selection within three seconds.
+The thirteen paused rows are **Resume, Recenter, Gun, Gun angle, Reload, Dual hands, Laser,
+Haptics, World size, Panel distance, Wider view, How to play, Quit**.
 
-## Bring your own models
+The shared menu supports either pointer, stick navigation and repeat, saved settings, a gun
+preview and confirmed Quit. Simulation and audio pause while head tracking stays live. Gun
+angle ranges from -30 to +30 degrees. Reload offers Shoot off-screen and Point off-screen;
+haptics offers Off, Light, Medium and Strong. Ninja-specific behavior and round feedback need
+the corresponding measured native validation, including empty pulls, reloads and both players.
 
-Add GLBs and matching JSON sidecars in `Download/guns/` or `Download/controllers/` on Quest.
-PC uses `guns/` and `controllers/` beside the player or game files. User models override
-matching bundled files, and controller sides fall back independently.
-[Model format and development notes](hotd2-vr/notes/lupin-development.md#user-models).
+Arcade, Zapper and user GLB guns remain available. **A complete eligible in-game Ninja weapon
+has not yet been located.** Do not treat another game's extracted gun as native to Ninja Assault.
+The model preparation and fallback infrastructure is inherited; completion of Ninja extraction
+is not claimed. Incomplete preparation must leave a usable fallback and permit later retry.
 
-## Known limits and testing
+Wider drawing and the stock hit-test lens must remain separate. Empty hands during story
+scenes, HUD placement, stable reload edges and P2 join/leave are validation targets; check the
+recorded Ninja results before treating them as verified.
 
-- Physical tracking, comfort, controller feel, sustained frame rate and compatibility remain
-  untested. Include your headset and build version when reporting a problem.
-- Extreme head movement can reveal black beyond geometry drawn by the original game camera.
-- Later stages, raw CUE/GDI boot and mixed P1-active/P2-continue timing need more testing.
+## User models
 
-[Validation evidence](hotd2-vr/notes/lupin-validation.md) ·
-[Headset checklist](hotd2-vr/notes/lupin-vr-headset-checklist.md) ·
-[Measured Lupin research](hotd2-vr/notes/lupin-findings.md) ·
-[Build and development notes](hotd2-vr/notes/lupin-development.md)
+Quest user folders sit beside the game ZIP, for example Download/guns/ and Download/controllers/.
+On PC, guns/ and controllers/ beside flycast.exe take priority, followed by folders beside the
+game ZIP, then licensed bundled data/models/. A same-named user file overrides the bundled
+model; controller sides fall back independently. Gun GLBs need a matching JSON sidecar.
+See [model format and build notes](hotd2-vr/notes/ninja-development.md#user-models).
+
+## Evidence and remaining checks
+
+The Android setup has 31 passing JVM checks covering ready/missing/malformed/incomplete sets,
+CRC/size metadata, BIOS shadowing, embedded BIOS, explicit paths and status behavior. VR Java,
+resources and the merged Android identity have compiled successfully. These checks do not
+prove native gameplay, headset tracking, comfort, sustained frame rate or later-stage coverage.
+
+Use the final build's recorded source commit and the root validation results:
+
+- [Measured Ninja findings](hotd2-vr/notes/ninja-findings.md)
+- [Validation record](hotd2-vr/notes/ninja-validation.md)
+- [Physical headset checklist](hotd2-vr/notes/ninja-vr-headset-checklist.md)
+- [Build and development notes](hotd2-vr/notes/ninja-development.md)
 
 ## Credits and licence
 
-- **Flycast** by flyinghead and contributors. **mikermak's VR fork** supplies the original
-  VR rendering, tools and model infrastructure. Links are in the overview above.
-- **Confidential Mission VR** provides the standalone setup, menus and reusable gun features.
-  Lupin adapts them to its original revision, camera, calibration and native game state.
-- Individual model authors, licences and transformations appear in the release's **CREDITS.txt**.
-- This software build is distributed under **GNU GPL version 3**; see [LICENSE-RELEASE.txt](LICENSE-RELEASE.txt). Upstream source notices retain their GPL-2.0-or-later terms.
-  Upstream notices and history are preserved. Original game and character rights remain
-  with their owners. The project title graphic contains no game screenshot or character art.
+[Flycast](https://github.com/flyinghead/flycast) by flyinghead and contributors supplies the
+emulator. [mikermak's VR fork](https://github.com/mikermak/hotd2-vr) supplies the original VR
+rendering and tools. Confidential Mission VR and Lupin VR provide the standalone menu,
+controller, gun and setup infrastructure adapted for this port.
 
-The first release binaries were verified from **`00706171d`**. The release tag identifies
-that corresponding source; the project page on `main` may have newer documentation.
-Game data and release signing material are never included.
+The release CREDITS.txt records each licensed model's author, source, licence and changes.
+Model files and notices are copied unchanged from the existing licensed bundle. Software
+builds are distributed under **GNU GPL version 3**; see [LICENSE-RELEASE.txt](LICENSE-RELEASE.txt).
+The packaged licence also preserves cgltf's MIT notice. Upstream source notices and history
+retain their terms. Any distribution needs the corresponding source commit. Game data,
+generated game models and private release-signing material are excluded.
