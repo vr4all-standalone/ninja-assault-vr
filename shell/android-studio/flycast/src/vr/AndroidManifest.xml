@@ -34,13 +34,13 @@
     <!-- no TV banner or logo: the main manifest's are Flycast's art (res/drawable-xhdpi/ic_banner.xml
          takes its place in the resources too) -->
     <application
-        android:label="Lupin the Third VR"
+        android:label="Ninja Assault VR"
         tools:replace="android:label"
         tools:remove="android:banner,android:logo">
         <meta-data android:name="com.oculus.supportedDevices" android:value="quest2|questpro|quest3|quest3s" />
         <meta-data android:name="com.oculus.vr.focusaware" android:value="true" />
 
-        <!-- the game in VR: started by the start screen (LupinStartActivity) with the game, or by adb;
+        <!-- the game in VR: started by the start screen (NinjaStartActivity) with the game, or by adb;
              not in the library itself. Also openable with a game file, as the regular app. -->
         <activity-alias
             android:name="com.flycast.emulator.MainActivity"
@@ -63,7 +63,7 @@
              files and starts it in VR. In a process of its own, so it can end a game still
              running in the app's own process and start it afresh. -->
         <activity
-            android:name="com.flycast.emulator.LupinStartActivity"
+            android:name="com.flycast.emulator.NinjaStartActivity"
             android:process=":setup"
             android:exported="true"
             android:resizeableActivity="true"
