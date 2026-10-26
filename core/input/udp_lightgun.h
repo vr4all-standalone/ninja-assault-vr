@@ -17,3 +17,7 @@ void lightgunSet(int player, int x, int y, u32 buttons);
 // True while the UDP light gun drives this port (a datagram arrived recently).
 // Mouse and analog-stick aiming stand aside meanwhile, so they can't fight over the crosshair.
 bool udpLightgunActive(int port);
+
+// Explicit XR cabinet Test request, kept separate from normal Start and legacy mappings.
+void lightgunService(bool pressed);
+bool lightgunServiceActive();

@@ -40,6 +40,19 @@
         <meta-data android:name="com.oculus.supportedDevices" android:value="quest2|questpro|quest3|quest3s" />
         <meta-data android:name="com.oculus.vr.focusaware" android:value="true" />
 
+        <!-- A fresh game task must not clear the 2D setup task that is launching it.
+             Quest Home can otherwise keep its passthrough panel flow in front of OpenXR. -->
+        <activity
+            android:name="com.flycast.emulator.NativeGLActivity"
+            android:taskAffinity="${applicationId}.vr">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.oculus.intent.category.VR" />
+                <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD" />
+            </intent-filter>
+        </activity>
+
         <!-- the game in VR: started by the start screen (NinjaStartActivity) with the game, or by adb;
              not in the library itself. Also openable with a game file, as the regular app. -->
         <activity-alias

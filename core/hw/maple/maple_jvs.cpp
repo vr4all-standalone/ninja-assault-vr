@@ -27,6 +27,8 @@
 #include "network/output.h"
 #include "hw/naomi/printer.h"
 #include "input/haptic.h"
+#include "input/udp_lightgun.h"
+#include "rend/vr/service_hold.h"
 
 #include <algorithm>
 #include <array>
@@ -2236,6 +2238,11 @@ u32 jvs_io_board::handle_jvs_message(const u8 *buffer_in, u32 length_in, u8 *buf
 					if ((mapleInputState[p].kcode & (1 << i)) == 0)
 						buttons[p] |= naomi_button_mapping[i];
 #endif
+            // The explicit XR Test pulse is independent of Start and legacy mappings.
+            // Apply after any game-specific cabinet override, including Survivor.
+            for (int player=0; player<4; ++player)
+                buttons[player] = vr::xr::serviceButtons(buttons[player], config::VrXr && config::VrXrGun && !config::GGPOEnable,
+                    player==0 && lightgunServiceActive(), NAOMI_TEST_KEY);
 			for (u32& button : buttons)
 			{
 				if ((button & (NAOMI_UP_KEY | NAOMI_DOWN_KEY)) == (NAOMI_UP_KEY | NAOMI_DOWN_KEY))

@@ -505,6 +505,19 @@ public abstract class BaseGLActivity extends Activity implements ActivityCompat.
     }
 
     @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        InputDevice device = event.getDevice();
+        if (QuestStartButtonPolicy.useOpenXr(getPackageName().equals(VR_APPLICATION_ID),
+                device == null ? 0 : device.getVendorId(),
+                device == null ? 0 : device.getSources(), event.getKeyCode())) {
+            if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0)
+                Log.i("flycast", "Quest Start button routed only to OpenXR");
+            return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (InputDeviceManager.getInstance().buttonEvent(event.getDeviceId(), keyCode, false))
             return true;

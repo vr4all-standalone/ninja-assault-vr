@@ -171,7 +171,8 @@ public class VrSetupActivity extends Activity
         intent.putExtra(EXTRA_GAME, game.getAbsolutePath());
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
-        finish();
+        // Exclusive hybrid handoff: remove only this panel task, after VR has launched.
+        finishAndRemoveTask();
     }
 
     /** Ends the app's main process (this panel runs in one of its own), and waits for it. */

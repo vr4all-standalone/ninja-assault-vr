@@ -125,6 +125,10 @@ bool gunState(int player, GunState& out);
 // The game asks for player 2 in its corner (its start prompt): player 2 isn't playing.
 // Seen in the last half second (when the game's profile knows the picture).
 bool player2Prompting();
+// Native membership at the last VBlank; false while loading or unsupported.
+bool playerInGame(int player);
+// Guarded native code/state is ready for Start, including the inactive title screen.
+bool gameStartReady();
 // The game shows one of its cutscenes during a game in progress: its letterbox bars (the profile's
 // letterboxTextures) in 18 of its frames in a row while a player is in the game (gunRam.playing),
 // until the sixth frame without them. Always false for a profile without both (HOTD2, MOK).

@@ -59,6 +59,8 @@ std::atomic<bool> running;
 u32 lastButtons[4];
 vr::GunInput gunInputs[4];
 std::atomic<int64_t> lastPacketMs[4];
+std::atomic<bool> serviceRequested { false };
+std::atomic<int64_t> serviceUpdated { 0 };
 
 int64_t nowMs() {
 	return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
@@ -98,6 +100,17 @@ void handle(const char *msg)
 		lightgunSet(player, x, y, buttons);
 }
 
+}
+
+void lightgunService(bool pressed)
+{
+	serviceUpdated = nowMs();
+	serviceRequested = pressed;
+}
+
+bool lightgunServiceActive()
+{
+	return serviceRequested.load() && nowMs() - serviceUpdated.load() < 500;
 }
 
 void lightgunSet(int player, int x, int y, u32 buttons)

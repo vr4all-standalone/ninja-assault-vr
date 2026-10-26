@@ -22,6 +22,7 @@ struct Gun {
  bool triggerWas=false,triggerWait=false,pointedDown=false,offArmed=false,reloadButtonWas=false;
  long long pullAt=0,reloadAt=0,heldAt=0;int shotsDue=0,autosDue=0,clicksDue=0;
 } guns[2]{{0,Right},{1,Left}};
+bool p2JoinPending=false;
 bool dualWield=false,p2StartWas=false,startSwallow=false,skipSwallow=false;
 int startOwner[2]{-1,-1};
 XrTime dualSince=0;
@@ -29,6 +30,7 @@ struct {bool held=false;} slide;
 bool starts[2]{},skips[2]{},promptKnown=true,prompting=false;
 u32 lastP1=0,lastP2=0;
 int hapticHand=-1;
+bool playerInGame(int player){return player==0 || !prompting;}
 bool boolAction(int action,int hand){return action==startAction?starts[hand]:skips[hand];}
 bool player2PromptKnown(){return promptKnown;}
 bool player2Prompting(){return prompting;}
@@ -42,7 +44,7 @@ using controllers::Button;
 int checks=0,failures=0;
 void check(bool okay,const char* message){++checks;if(!okay){++failures;std::fprintf(stderr,"FAIL %s\n",message);}}
 void reset(){
- guns[0]=Gun{0,Right};guns[1]=Gun{1,Left};dualWield=false;dualSince=0;
+ guns[0]=Gun{0,Right};guns[1]=Gun{1,Left};dualWield=false;p2JoinPending=false;dualSince=0;
  starts[0]=starts[1]=skips[0]=skips[1]=false;
  p2StartWas=startSwallow=skipSwallow=false;startOwner[0]=startOwner[1]=-1;promptKnown=true;prompting=false;
  config::VrDualP1Left.value=true;config::VrDualWield.value=true;config::GGPOEnable.value=false;

@@ -846,12 +846,17 @@ static u32 p2PromptTextures[4];	// ...and GameProfile::p2PromptTextures
 // (the headset's); valid false: not read yet.
 static std::mutex gunMutex;
 static GunState gunSnaps[2];
+// Native slots published once at VBlank: input requests are not membership.
+static std::atomic<u8> confirmedPlayers { 0 };
+static std::atomic<bool> startInputReady { false };
 static std::atomic<u8> vmPlayers { 0 };
 static std::atomic<bool> vmPlayersKnown { false };
 static std::atomic<bool> ninjaStory { false };
 
 static void applyGameProfile(Event, void *)
 {
+	confirmedPlayers = 0;
+	startInputReady = false;
 	std::fill(std::begin(fovLiterals), std::end(fovLiterals), 0u);
 	std::fill(std::begin(markerTextures), std::end(markerTextures), 0u);
 	std::fill(std::begin(p2PromptTextures), std::end(p2PromptTextures), 0u);
@@ -1015,6 +1020,16 @@ static u32 gunBlock(const GameProfile *prof, int player)
 	return 0x8C000000u | ((prof->gunRam.base + player * prof->gunRam.stride) & 0x01FFFFFFu);
 }
 
+bool gameStartReady()
+{
+	return emu.running() && startInputReady.load();
+}
+
+bool playerInGame(int player)
+{
+	return player >= 0 && player < 2 && emu.running() && ((confirmedPlayers.load() >> player) & 1) != 0;
+}
+
 bool gunState(int player, GunState& out)
 {
 	out = GunState {};
@@ -1048,6 +1063,18 @@ static bool vmCount(u32 addr, u32 maximum, u32& value)
 static void snapGuns(Event, void *)
 {
 	const GameProfile *prof = activeProfile;
+	u8 nativeMembership = 0;
+	bool nativeReady = false;
+	// CM's two-bit membership byte is valid only after its guarded code is loaded.
+	if (prof != nullptr && prof->gunRam.playing != 0 && profileCodeThere(*prof))
+	{
+		const u8 players = ReadMem8_nommu(0x8C000000u | (prof->gunRam.playing & 0x01FFFFFFu));
+		if ((players & ~3) == 0)
+		{
+			nativeMembership = players;
+			nativeReady = true;
+		}
+	}
  if (prof != nullptr && prof->ninja) {
   bool guarded=profileCodeThere(*prof);
   for (const CodeGuard& g:prof->gunRam.guards)
@@ -1080,10 +1107,13 @@ static void snapGuns(Event, void *)
    if (now.fired!=was.fired) NOTICE_LOG(RENDERER,"VR: P%d accepted round %u ammo %u",player+1,now.fired,now.ammo);
    gunSnaps[player]=now;
   }
-  const auto was=vmPlayers.exchange(players); vmPlayersKnown=guarded;
+  nativeMembership = players;
+		const auto was=vmPlayers.exchange(players); vmPlayersKnown=guarded; nativeReady=guarded;
   for(int player=0;player<2;player++) if (((was^players)>>player)&1)
    NOTICE_LOG(RENDERER,"VR: P%d active %s",player+1,((players>>player)&1)?"on":"off");
   if(ninjaStory.exchange(story)!=story) NOTICE_LOG(RENDERER,"VR: cutscene %s",story?"on":"off");
+  startInputReady = nativeReady;
+	confirmedPlayers = nativeMembership;
   return;
  }
 	u8 enabled = 0;
@@ -1097,8 +1127,10 @@ static void snapGuns(Event, void *)
 				&& vmCount(prof->gunRam.active, 1, active[0]) && vmCount(prof->gunRam.active + 4, 1, active[1]);
 		if (vmValid && session == 1)
 			enabled = (u8)(active[0] | (active[1] << 1));
+		nativeMembership = enabled;
 		const u8 was = vmPlayers.exchange(enabled);
 		vmPlayersKnown = vmValid;
+		nativeReady = vmValid;
 		for (int player = 0; player < 2; player++)
 			if (((was ^ enabled) >> player) & 1)
 				NOTICE_LOG(RENDERER, "VR: P%d active %s", player + 1, ((enabled >> player) & 1) ? "on" : "off");
@@ -1150,6 +1182,8 @@ static void snapGuns(Event, void *)
 			NOTICE_LOG(RENDERER, "VR: P%d magazine 0 -> %d", player + 1, now.magazine);
 		gunSnaps[player] = now;
 	}
+	startInputReady = nativeReady;
+	confirmedPlayers = nativeMembership;
 }
 
 static struct GunSnapRegistration

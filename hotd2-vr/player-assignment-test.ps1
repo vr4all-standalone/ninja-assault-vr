@@ -17,20 +17,30 @@ function ProductionBlock([string]$Source,[string]$Signature){
  $Source.Substring($start,$end-$start)
 }
 $code=@()
-foreach($signature in @('int twoPlayerP1Hand()','int dualP1Hand()','int p1Hand()','void suppressGunInput(Gun& g)','void swapGunHands()','void playerStartButtons(')){
+foreach($signature in @('int twoPlayerP1Hand()','int dualP1Hand()','int p1Hand()','void suppressGunInput(Gun& g)','void swapGunHands()','int startButtonOwner(int hand)','void playerStartButtons(','void sampleStartButtons(')){
  if($hostSource.Contains($signature)){$code+=ProductionBlock $hostSource $signature}
 }
 $update=$hostSource.IndexOf('void updateLightgun(')
+$resetBlock=ProductionBlock $hostSource.Substring($update) 'if (config::VrXrGun && newGame.exchange(false))'
+$focusBlock=ProductionBlock $hostSource.Substring($update) 'if (!focused)'
+if(-not $focusBlock.Contains('resetStartGestures();')){throw 'Focus loss must reset pending Start/service gestures'}
+$syncBegin=$hostSource.IndexOf('if (!XR_SUCCEEDED(XR(xrSyncActions)', $update)
+$syncEnd=$hostSource.IndexOf('if (!boolAction(startAction, Right))', $syncBegin)
+if(-not $hostSource.Substring($syncBegin,$syncEnd-$syncBegin).Contains('resetStartGestures();')){throw 'Action sync failure must reset pending Start/service gestures'}
+$code+='void resetForNewGame(){'+$resetBlock+'}'
 $begin=$hostSource.IndexOf('int hand1 = p1Hand(), hand2 = 1 - hand1;',$update)
+$joinBegin=$hostSource.IndexOf('const bool canJoin =',$update)
+if($joinBegin -ge 0 -and ($begin -lt 0 -or $joinBegin -lt $begin)){$begin=$joinBegin}
+$begin=$hostSource.LastIndexOf("`n",$begin)+1
 $end=$hostSource.IndexOf("// The game's first Start of player 1's or trigger pull",$begin)
 if($begin -lt 0 -or $end -le $begin){throw 'Missing production hand/join block'}
 $menuBegin=$hostSource.IndexOf('if (menuOpen)',$update)
-$sampleAt=$hostSource.IndexOf('playerStartButtons(leftStart, rightStart, p1Start, p2Start);',$update)
+$sampleAt=$hostSource.IndexOf('sampleStartButtons(time, leftStart, rightStart,',$update)
 $prepAt=$hostSource.IndexOf('if (preparing)',$update)
 if($sampleAt -lt 0 -or $sampleAt -gt $menuBegin -or $sampleAt -gt $prepAt){throw 'Physical Start ownership must sample before menu/preparation returns'}
 $menuBlock=ProductionBlock $hostSource.Substring($update) 'if (menuOpen)'
 $code+='void menuFrame(bool leftStart,bool rightStart){XrTime time=0;bool menuEdge=false,skip=false,skipEdge=false;bool p1Start,p2Start;playerStartButtons(leftStart,rightStart,p1Start,p2Start);'+$menuBlock+'}'
-$code+='void frameCode(XrTime time, const bool tracked[2], float pulls[2], bool leftStart, bool skip, u32 dpad=0){bool p1Start,p2Start;playerStartButtons(leftStart,boolAction(startAction,Right)&&!startSwallow,p1Start,p2Start);'+$hostSource.Substring($begin,$end-$begin)+'lastP1=p1;lastP2=p2;}'
+$code+='void frameCode(XrTime time, const bool tracked[2], float pulls[2], bool leftStart, bool skip, u32 dpad=0){bool p1Start,p2Start;playerStartButtons(leftStart,boolAction(startAction,Right)&&!startSwallow,p1Start,p2Start);'+$hostSource.Substring($begin,$end-$begin)+'lastP1=p1;if(dualWield)lastP2=p2;}'
 $code+=[regex]::Match($menuSource,'const char \*const HandsNames\[2\] \{[^;]+;').Value
 $cases=[regex]::Matches($menuSource,'(?s)case (?:Hands|TwoPlayers):(.*?)case Laser:')
 if($cases.Count -ne 2){throw 'Missing production menu cases'}
