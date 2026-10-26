@@ -5,7 +5,7 @@
 # Ninja Assault VR
 ### SEGA NAOMI Light-Gun Action · Standalone Meta Quest & PC VR
 
-[![Release v1.0.2](https://img.shields.io/badge/Release-v1.0.2_Experimental-e49c35?style=for-the-badge)](https://github.com/vr4all-standalone/ninja-assault-vr/releases/latest)
+[![Release v1.0.3](https://img.shields.io/badge/Release-v1.0.3_Experimental-e49c35?style=for-the-badge)](https://github.com/vr4all-standalone/ninja-assault-vr/releases/latest)
 [![Quest and PC VR](https://img.shields.io/badge/Headset-Quest_%C2%B7_PC_VR_OpenXR-blue?style=for-the-badge)](#installation)
 [![Original game required](https://img.shields.io/badge/Your_Game-ninjaslt_World_NJA2_Ver.A-orange?style=for-the-badge)](#what-you-need)
 
@@ -149,6 +149,8 @@ Choose **P1 right / P2 left** to reverse the two-player assignment. Single-playe
 Start/join buttons and either-trigger transfer keep the behavior shown above.
 Touch, Index, Vive and WMR use their controller-specific labels and bindings.
 
+Start ownership matches Confidential Mission: a held A or X stays with its original player until released through joining, leaving or reversing **Two players**. Simultaneous A/X presses keep P1 and P2 separate.
+
 ## Menu
 
 **Resume · Recenter · Gun · Gun angle · Reload · Two players · Laser · Haptics ·
@@ -203,3 +205,7 @@ Software releases are distributed under **GNU GPL version 3**; see
 [LICENSE-RELEASE.txt](LICENSE-RELEASE.txt). Corresponding source is available in this
 repository at the release tag. No commercial game data or private signing material
 is included in the downloads.
+
+### Player assignment regression
+
+Run `powershell -NoProfile -File hotd2-vr/player-assignment-test.ps1` on a Windows development machine with Visual Studio C++ tools. It compiles the production hand policy, Start ownership, join/leave and menu code and checks both layouts against Confidential Mission behavior.

@@ -24,6 +24,7 @@ $oldSettingUsed=$hostSource -match 'config::VrP1Hand'
 $menuNamed=$menuSource.Contains('"Two players"')
 $code+="constexpr bool defaultEnabled=$($defaultEnabled.ToString().ToLower()), oldSettingUsed=$($oldSettingUsed.ToString().ToLower()), menuNamed=$($menuNamed.ToString().ToLower());"
 $code+=ProductionFunction $hostSource 'int p1Hand()'
+$code+=ProductionFunction $hostSource 'void playerStartButtons(bool leftStart, bool rightStart, bool& p1Start, bool& p2Start)'
 $code+=ProductionFunction $hostSource 'bool triggerHeld(const Gun& g, float pull)'
 if($hostSource.Contains('bool dualWielding()')){$code+=ProductionFunction $hostSource 'bool dualWielding()'}else{$code+='bool dualWielding() { return dualWield; }'}
 $waitBegin=$hostSource.IndexOf('if (g.triggerWait && !trigger)')
@@ -33,7 +34,7 @@ $code+="u32 releaseGate(Gun& g, bool trigger, u32 buttons) {`n"+$hostSource.Subs
 $start=[regex]::Match($hostSource,'(?m)^\s*(?:const )?int hand1 = p1Hand\(\), hand2 = 1 - hand1;').Index
 $finish=$hostSource.IndexOf("`n`t// The game's first Start of player 1's or trigger pull",$start)
 if($start -le 0 -or $finish -le $start){throw 'Missing production hand assignment block'}
-$code+="void updateHands(XrTime time, const bool tracked[2], const float pulls[2], bool leftStart, bool skip, u32 dpad=0) {`n"+$hostSource.Substring($start,$finish-$start)+"`nlastP1=p1; lastP2=p2;`n}"
+$code+="void updateHands(XrTime time, const bool tracked[2], const float pulls[2], bool leftStart, bool skip, u32 dpad=0) {`nbool p1Start,p2Start;playerStartButtons(leftStart,boolAction(startAction,Right)&&!startSwallow,p1Start,p2Start);`n"+$hostSource.Substring($start,$finish-$start)+"`nlastP1=p1; lastP2=p2;`n}"
 $code+=[regex]::Match($menuSource,'const char \*const HandsNames\[2\] \{[^\r\n]+').Value
 $matches=[regex]::Matches($menuSource,'(?s)case Hands:(.*?)case Laser:')
 if($matches.Count -ne 2){throw 'Expected menu value and change cases'}

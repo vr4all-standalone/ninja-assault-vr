@@ -22,7 +22,8 @@ struct Gun {
  bool triggerWas=false,triggerWait=false,pointedDown=false,offArmed=false,reloadButtonWas=false;
  long long pullAt=0,reloadAt=0,heldAt=0;int shotsDue=0,autosDue=0,clicksDue=0;
 } guns[2]{{0,Right},{1,Left}};
-bool dualWield=false,p2StartWas=false,p2JoinHeld=false,startSwallow=false,skipSwallow=false;
+bool dualWield=false,p2StartWas=false,startSwallow=false,skipSwallow=false;
+int startOwner[2]{-1,-1};
 XrTime dualSince=0;
 struct {bool held=false;} slide;
 bool starts[2]{},skips[2]{},promptKnown=true,prompting=false;
@@ -43,7 +44,7 @@ void check(bool okay,const char* message){++checks;if(!okay){++failures;std::fpr
 void reset(){
  guns[0]=Gun{0,Right};guns[1]=Gun{1,Left};dualWield=false;dualSince=0;
  starts[0]=starts[1]=skips[0]=skips[1]=false;
- p2StartWas=p2JoinHeld=startSwallow=skipSwallow=false;promptKnown=true;prompting=false;
+ p2StartWas=startSwallow=skipSwallow=false;startOwner[0]=startOwner[1]=-1;promptKnown=true;prompting=false;
  config::VrDualP1Left.value=true;config::VrDualWield.value=true;config::GGPOEnable.value=false;
  config::VrP1Hand.value="left";hapticHand=-1;lastP1=lastP2=0;
 }
@@ -100,7 +101,7 @@ int main(){
  }
  reset();dualWield=true;dualSince=1;guns[0].hand=Left;guns[1].hand=Right;
  prompting=true;starts[Right]=true;frame(5'000'000'000LL);
- check(!dualWield&&p1Hand()==Right&&lastP1==4&&lastP2==0,"P2 leave restores fixed single A/X controls in the same frame");
+ check(!dualWield&&p1Hand()==Right&&lastP1==0&&lastP2==0,"held P2 Start does not start P1 when P2 leaves");
  check(guns[0].hand==Left,"P2 leave keeps P1's current gun hand");
  starts[Right]=false;prompting=false;frame(5'100'000'000LL,0,1);
  check(guns[0].hand==Right,"either-trigger single transfer resumes after P2 leaves");
