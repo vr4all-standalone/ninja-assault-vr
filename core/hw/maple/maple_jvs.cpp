@@ -28,7 +28,7 @@
 #include "hw/naomi/printer.h"
 #include "input/haptic.h"
 #include "input/udp_lightgun.h"
-#include "rend/vr/service_hold.h"
+#include "rend/vr/service_controls.h"
 
 #include <algorithm>
 #include <array>
@@ -2238,11 +2238,17 @@ u32 jvs_io_board::handle_jvs_message(const u8 *buffer_in, u32 length_in, u8 *buf
 					if ((mapleInputState[p].kcode & (1 << i)) == 0)
 						buttons[p] |= naomi_button_mapping[i];
 #endif
-            // The explicit XR Test pulse is independent of Start and legacy mappings.
-            // Apply after any game-specific cabinet override, including Survivor.
+            // Explicit XR entry/exit, Next and Select pulses are independent of ordinary Start.
+            // Input ownership is already applied; source buttons are remapped by read_digital_in below.
+            const auto serviceStyle=vr::xr::serviceStyle(settings.content.gameId);
+            const bool namco=serviceStyle!=vr::xr::ServiceStyle::Naomi;
+            const u32 enter=serviceStyle==vr::xr::ServiceStyle::Ninja ? NAOMI_BTN2_KEY
+                    : serviceStyle==vr::xr::ServiceStyle::Survivor ? NAOMI_START_KEY : NAOMI_TEST_KEY;
             for (int player=0; player<4; ++player)
                 buttons[player] = vr::xr::serviceButtons(buttons[player], config::VrXr && config::VrXrGun && !config::GGPOEnable,
-                    player==0 && lightgunServiceActive(), NAOMI_TEST_KEY);
+                    player==0 && lightgunServiceActive(), NAOMI_TEST_KEY,
+                    player==0 && lightgunServiceNextActive(), namco ? NAOMI_DOWN_KEY : NAOMI_SERVICE_KEY,
+                    player==0 && lightgunServiceSelectActive(), enter);
 			for (u32& button : buttons)
 			{
 				if ((button & (NAOMI_UP_KEY | NAOMI_DOWN_KEY)) == (NAOMI_UP_KEY | NAOMI_DOWN_KEY))

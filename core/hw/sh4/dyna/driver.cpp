@@ -1,4 +1,5 @@
 #include "types.h"
+#include "hw/naomi/naomi_boot.h"
 #include <unordered_set>
 
 #include "hw/sh4/sh4_interpreter.h"
@@ -157,6 +158,8 @@ bool RuntimeBlockInfo::Setup(u32 rpc,fpscr_t rfpu_cfg)
 static DynarecCodeEntryPtr compilePC(u32 blockcheck_failures)
 {
 	const u32 pc = Sh4cntx.pc;
+    // BIOS PIO loading invalidates the entry page on every main/test boot.
+    observeNaomiGameBoot(pc, Sh4cntx.r[1]);
 
 	if (codeBuffer.getFreeSpace() < 32_KB || pc == 0x8c0000e0 || pc == 0xac010000 || pc == 0xac008300)
 		Sh4Recompiler::Instance->ResetCache();

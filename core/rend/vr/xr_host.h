@@ -49,6 +49,12 @@ bool menuPaused();
 // The VR menu opens (on) or closes: asked on the render thread, done at the top of the next
 // Emulator::render (applyPause), between headset frames.
 void requestPause(bool on);
+// Service access is an explicit VR-menu action; controller buttons never open it.
+bool serviceMenuAvailable();
+bool openServiceMenu();
+bool serviceMenuExitAvailable();
+// Emulator-thread notification for native main-game boot or modal operator-menu return.
+void notifyServiceGameBoot();
 // Emulator::render, render thread, first thing: stops or starts the emulator as requestPause asked.
 void applyPause();
 // What the left stick click does: the game camera goes where the head is (its yaw) on the next frame.
@@ -87,6 +93,10 @@ inline void term() {}
 inline const char *controllerProfile() { return ""; }
 inline bool menuPaused() { return false; }
 inline void requestPause(bool) {}
+inline bool serviceMenuAvailable() { return false; }
+inline bool openServiceMenu() { return false; }
+inline bool serviceMenuExitAvailable() { return false; }
+inline void notifyServiceGameBoot() {}
 inline void applyPause() {}
 inline void recenter() {}
 inline void quitToStart() {}

@@ -1,5 +1,9 @@
 #include <algorithm>
 #include <atomic>
+#include <array>
+#include <cstring>
+#include <cassert>
+#include <iterator>
 #include <cctype>
 #include <cstdio>
 #include <string>
@@ -14,7 +18,8 @@ std::string savedKey,savedValue;
 void saveBool(const char*,const char* key,bool value){savedKey=key;savedValue=value?"true":"false";}
 void saveStr(const char*,const char* key,const char* value){savedKey=key;savedValue=value;}
 }
-namespace vr { namespace survivor { void neutral(){} bool game(){return false;} } }
+namespace vr { namespace survivor { void neutral(){} bool game(){return false;} bool ready(){return false;} } }
+namespace survivor=vr::survivor;
 struct Gun {int player=0,hand=Right;bool triggerWas=false,triggerWait=false,pointedDown=false,offArmed=false,reloadButtonWas=false,freshPull=false;XrTime pullAt=0,heldAt=0,reloadAt=0;int shotsDue=0,autosDue=0,clicksDue=0;unsigned shotCount=0;} guns[2]{{0,Right},{1,Left}};
 bool menuOpen=false;void updateMenu(XrTime,bool,bool,bool){}
 bool p2JoinPending=false;unsigned players=1;bool autoAccept=true;
@@ -28,15 +33,37 @@ bool player2PromptKnown(){return known;}bool player2Prompting(){return prompt;}
 void lightgunSet(int player,int,int,u32 buttons){if(player==1)lastP2=buttons;}void noteHolds(const char*){}void haptic(int hand,float,float){feedback=hand;}
 #define NOTICE_LOG(...)
 std::atomic<bool> newGame{false};bool p1Armed=false;void setHowToPlay(bool,const char*){}
-#include "../../core/rend/vr/service_hold.h"
-vr::xr::StartReleaseGate startRelease;vr::xr::ServiceHold serviceHold;bool serviceRequest=false;void lightgunService(bool value){serviceRequest=value;}
+#include "../../core/rend/vr/service_controls.h"
+#include "../../core/rend/vr/service_boot.h"
+using vr::xr::ServiceStyle;using vr::xr::serviceStyle;
+struct {struct {std::string gameId;}content;}settings;
+vr::xr::StartReleaseGate startRelease;vr::xr::ServiceControls serviceControls;
+std::atomic<uint64_t> serviceGameBootGeneration{0};
+std::atomic<bool> startInputReady{true};auto& gameReady=startInputReady;bool emuRunning=true;struct {bool running(){return emuRunning;}} emu;
+bool menuCloseRequested=false;void close(){menuCloseRequested=true;}bool serviceRequest=false,serviceNextRequest=false,serviceEntryRequest=false,serviceSelectRequest=false;void lightgunService(bool value,bool next=false,bool select=false){serviceRequest=value||select;serviceEntryRequest=value;serviceNextRequest=next;serviceSelectRequest=select;}
 #include "under_test.inc"
 int checks=0,failures=0;
 void check(bool ok,const char* what){++checks;if(!ok){++failures;std::fprintf(stderr,"FAIL %s\n",what);}}
 void layout(bool left){config::VrDualP1Left.value=config::VrSwapP1P2.value=left;config::VrTwoPlayerP1Hand.value=left?"left":"right";}
-void reset(bool left=true){p2JoinPending=false;players=1;autoAccept=true;menuOpen=false;guns[0]=Gun{0,Right};guns[1]=Gun{1,Left};dualWield=false;dualSince=0;p2StartWas=p2JoinHeld=startSwallow=skipSwallow=false;known=true;prompt=false;config::VrDualWield.value=true;config::GGPOEnable.value=false;feedback=-1;lastP1=lastP2=0;for(int h:{Left,Right}){starts[h]=skips[h]=triggerReleaseWait[h]=startHeld[h]=false;startOwner[h]=-1;startPlayer[h]=1-h;}layout(left);}
+void reset(bool left=true){settings.content.gameId="";serviceControls.reset();startRelease.reset();serviceRequest=serviceNextRequest=false;startSwallow=menuCloseRequested=false;p2JoinPending=false;players=1;autoAccept=true;menuOpen=false;guns[0]=Gun{0,Right};guns[1]=Gun{1,Left};dualWield=false;dualSince=0;p2StartWas=p2JoinHeld=startSwallow=skipSwallow=false;known=true;prompt=false;config::VrDualWield.value=true;config::GGPOEnable.value=false;feedback=-1;lastP1=lastP2=0;for(int h:{Left,Right}){starts[h]=skips[h]=triggerReleaseWait[h]=startHeld[h]=false;startOwner[h]=-1;startPlayer[h]=1-h;}layout(left);}
 void frame(XrTime t=1'000'000'000LL,float left=0,float right=0,bool tl=true,bool tr=true){bool tracked[2]{tl,tr};float pulls[2]{left,right};frameCode(t,tracked,pulls,starts[Left],skips[Left]||skips[Right]);if(autoAccept && players==1 && (lastP2&4)){players=3;frameCode(t+1,tracked,pulls,starts[Left],skips[Left]||skips[Right]);}}
 int main(){
+ gameReady=false;check(!serviceMenuAvailable(),"Service row waits for initial native game loading");gameReady=true;
+ emuRunning=false;check(!gameStartReady()&&serviceMenuAvailable(),"paused VR menu can open Service from loaded snapshot");emuRunning=true;
+ using vr::xr::nativeMainBoot;
+ check(nativeMainBoot(0x0c020800,0x0c01f820,0x0c020800,0x0c020000),"standard BIOS main handoff restores controls");
+ check(nativeMainBoot(0x8c021000,0x0c01f820,0x8c021000,0x8c021000),"equal main/test PC still recognizes main selector");
+ check(!nativeMainBoot(0x8c021000,0x0c01f824,0x8c021000,0x8c021000),"equal main/test PC rejects Game Test selector");
+ check(!nativeMainBoot(0x0c020000,0x0c01f824,0x0c020800,0x0c020000),"Game Test boot preserves navigation");
+ check(nativeMainBoot(0xac020800,0x8c01f820,0x0c020800,0x0c020000),"cached and uncached RAM aliases agree");
+ check(!nativeMainBoot(0x0c020802,0x0c01f820,0x0c020800,0x0c020000),"only exact native entry is accepted");
+ check(!nativeMainBoot(0x0c020800,0x0c01f824,0x0c020800,0x0c020800),"test boot cannot mimic equal main entry");
+ check(!nativeMainBoot(0x0c020800,0,0x0c020800,0x0c020000),"ordinary recompiled code is not a BIOS handoff");
+ check(!nativeMainBoot(0x0c020800,0x0c01f820,0x0c020800,0),"uninitialized test header is rejected");
+ check(!nativeMainBoot(0x0c01f820,0x0c01f820,0x0c01f820,0x0c020000),"BIOS metadata is not executable game entry");
+ check(!nativeMainBoot(0x0c020801,0x0c01f820,0x0c020801,0x0c020000),"unaligned header is rejected");
+ check(!nativeMainBoot(0x0d020800,0x0c01f820,0x0d020800,0x0c020000),"entry outside NAOMI RAM is rejected");
+
  for(bool left:{false,true}){
   reset(left);int hp=left?Left:Right;
   check(p1Hand()==Right,"solo P1 Start role is right regardless of dual layout");
@@ -73,66 +100,112 @@ int main(){
  {
   vr::xr::StartReleaseGate gate;
   check(!gate.sample(Right,true,false),"boot A does not reach native Start");
-  check(!gate.sample(Right,true,true),"A held across native readiness needs release");
-  gate.sample(Right,false,true);check(gate.sample(Right,true,true),"fresh A after ready remains normal Start");
-  check(!gate.sample(Left,true,false)&&!gate.sample(Left,true,true),"loading X also requires release at readiness");
+  check(!gate.sample(Right,true,true),"A held across native readiness requires release");
+  gate.sample(Right,false,true);check(gate.sample(Right,true,true),"fresh A after loading remains normal Start");
+  check(!gate.sample(Left,true,false)&&!gate.sample(Left,true,true),"boot X also requires release");
   gate.sample(Left,false,true);check(gate.sample(Left,true,true),"fresh X passes after readiness");
-  gate.reset();check(!gate.sample(Right,true,true),"reset never inherits a held Start");
-  vr::xr::ServiceHold hold;
-  check(!hold.update(0,true,true),"A cannot open Service immediately");
-  check(!hold.update(1'500'000'000LL,true,true)&&hold.visible()&&hold.progress()>.49f&&hold.progress()<.51f,"held A shows halfway progress");
-  check(!hold.update(2'999'999'999LL,true,true),"Service remains closed before three seconds");
-  check(hold.update(3'000'000'000LL,true,true),"three-second A hold sends explicit Test pulse");
-  check(!hold.update(3'300'000'000LL,true,true),"Test pulse releases while A remains held");
-  check(!hold.update(9'000'000'000LL,true,true),"held A cannot reopen Service repeatedly");
-  hold.update(9'100'000'000LL,false,true);hold.update(10'000'000'000LL,true,true);
-  check(hold.update(13'000'000'000LL,true,true),"release permits a new deliberate hold");
-  hold.reset();hold.update(0,true,true);hold.update(2'000'000'000LL,false,true);check(!hold.visible()&&!hold.update(4'000'000'000LL,false,true),"early release cancels Service without delayed opening");
-  hold.update(5'000'000'000LL,true,true);check(!hold.update(9'000'000'000LL,true,false)&&!hold.visible(),"focus loss or settings/preparation cancels hold and pulse");
-  check(vr::xr::serviceButtons(0x71,true,false,0x40)==0x71,"unrelated cabinet Service/Test stays available");
-  check(vr::xr::serviceButtons(0x11,true,true,0x40)==0x51,"only deliberate hold adds native Test");
-  check(vr::xr::serviceButtons(0x71,false,false,0x40)==0x71,"ordinary non-VR cabinet input stays unchanged");
-  vr::xr::ServiceHold sparse; sparse.update(0,true,true);
-  check(sparse.update(3'100'000'000LL,false,true)&&sparse.startPlayer()<0,"release after threshold cannot become a short Start when a frame was skipped");
+  gate.reset();check(!gate.sample(Right,true,true),"reset cannot inherit held Start");
+  check(vr::xr::serviceButtons(0x71,true,false,0x40)==0x71,"existing keyboard/gamepad cabinet controls remain available");
+  check(vr::xr::serviceButtons(0x01,true,true,0x40,false,0x20)==0x41,"explicit Select adds only Test");
+  check(vr::xr::serviceButtons(0x01,true,false,0x40,true,0x20)==0x21,"explicit Next adds only Service");
+  check(vr::xr::serviceButtons(0x01,true,true,0x40,true,0x20)==0x61,"Next and Select remain independent native inputs");
+  check(vr::xr::serviceButtons(0x71,false,true,0x40,true,0x20)==0x71,"disabled XR injection does not alter cabinet input");
  }
-
  {
   bool p1=false,p2=false;
-  reset();startRelease.reset();serviceHold.reset();
-  sampleStartButtons(0,false,true,false,true,true,p1,p2);
-  sampleStartButtons(1'000'000'000LL,false,true,true,true,true,p1,p2);
-  sampleStartButtons(1'100'000'000LL,false,false,true,true,true,p1,p2);
-  check(!p1&&!p2&&!serviceRequest,"raw boot-held A cannot become a delayed Start tap at readiness");
-  sampleStartButtons(2'000'000'000LL,false,true,true,true,true,p1,p2);
-  check(!p1&&!p2,"short A waits for release before Start");
-  sampleStartButtons(2'100'000'000LL,false,false,true,true,true,p1,p2);
-  check(p1&&!p2&&!serviceRequest,"fresh released A starts P1 at the loaded title screen");
-  sampleStartButtons(2'300'000'000LL,false,false,true,true,true,p1,p2);
-  check(!p1&&!p2,"short Start pulse releases after bounded delivery");
-  sampleStartButtons(3'000'000'000LL,false,true,true,true,true,p1,p2);
-  dualWield=true;players=3;layout(true);
-  sampleStartButtons(3'100'000'000LL,false,false,true,true,true,p1,p2);
-  check(p1&&!p2,"short A keeps its original player through a dual-layout change");
-  reset();startRelease.reset();serviceHold.reset();sampleStartButtons(0,false,false,true,true,true,p1,p2);
-  sampleStartButtons(1,false,true,true,true,true,p1,p2);
-  sampleStartButtons(3'000'000'001LL,false,true,true,true,true,p1,p2);
-  check(serviceRequest&&!p1&&!p2,"successful A service hold sends Test without normal Start");
-  sampleStartButtons(3'010'000'001LL,false,false,true,true,true,p1,p2);
-  check(!p1&&!p2,"release after service hold cannot emit a late Start");
-  sampleStartButtons(3'300'000'001LL,false,false,true,true,true,p1,p2);
-  check(!serviceRequest,"native Test pulse releases after its delivery interval");
-  sampleStartButtons(4'000'000'000LL,false,true,true,true,true,p1,p2);
-  sampleStartButtons(6'000'000'000LL,false,true,true,true,false,p1,p2);
-  sampleStartButtons(8'000'000'000LL,false,true,true,true,true,p1,p2);
-  check(!serviceRequest&&!p1&&!p2&&!serviceHold.visible(),"focus/menu cancellation requires A release before another gesture");
-  sampleStartButtons(9'000'000'000LL,true,false,true,true,false,p1,p2);
-  sampleStartButtons(10'000'000'000LL,true,false,true,true,true,p1,p2);
-  check(!p1&&!p2,"X held while input is disabled cannot leak on resume");
-  reset();config::GGPOEnable.value=true;startRelease.reset();serviceHold.reset();sampleStartButtons(0,false,false,true,true,true,p1,p2);
-  sampleStartButtons(1,false,true,true,true,true,p1,p2);
-  check(p1&&!p2&&!serviceRequest,"online A keeps ordinary synchronized Start instead of local service gesture");
-  sampleStartButtons(4'000'000'001LL,false,true,true,true,true,p1,p2);
-  check(!serviceRequest&&!serviceHold.visible(),"local service hold stays disabled online");
+  reset();sampleStartButtons(0,false,true,false,true,p1,p2);
+  sampleStartButtons(1'000'000'000LL,false,true,true,true,p1,p2);
+  check(!p1&&!p2&&!serviceRequest&&!serviceControls.active,"A held from loading neither starts nor opens Service");
+  sampleStartButtons(1'100'000'000LL,false,false,true,true,p1,p2);
+  sampleStartButtons(2'000'000'000LL,false,true,true,true,p1,p2);
+  check(p1&&!p2&&!serviceRequest,"fresh A starts P1 immediately without a Service gesture");
+  sampleStartButtons(10'000'000'000LL,false,true,true,true,p1,p2);
+  check(p1&&!serviceRequest&&!serviceNextRequest&&!serviceControls.active,"holding A for any duration cannot open Service");
+  sampleStartButtons(11'000'000'000LL,false,false,true,true,p1,p2);
+  check(!p1&&!p2&&!serviceRequest,"released A releases Start without a late Test pulse");
+  reset();config::GGPOEnable.value=true;sampleStartButtons(0,false,false,true,true,p1,p2);
+  sampleStartButtons(1,false,true,true,true,p1,p2);
+  check(p1&&!serviceRequest&&!serviceControls.active,"online A remains ordinary synchronized Start");
+  check(!openServiceMenu()&&!serviceControls.active,"online play cannot request local Service");
+  config::GGPOEnable.value=false;config::VrXrGun.value=false;
+  check(!openServiceMenu()&&!serviceControls.active,"disabled VR guns cannot request Service");
+  config::VrXrGun.value=true;
+ }
+ {
+  bool p1=false,p2=false;
+  reset();serviceGameBootGeneration=4;chooseServiceRow();
+  check(menuCloseRequested&&serviceControls.active&&serviceControls.pending&&!serviceRequest,"the real Service row queues entry and resumes the paused game without immediate Test");
+  sampleStartButtons(0,false,true,false,false,p1,p2);
+  check(serviceControls.pending&&!serviceRequest&&!serviceNextRequest&&!p1&&!p2,"paused/menu-held A cannot dispatch Service before unpause");
+  sampleStartButtons(1'000'000'000LL,true,true,false,true,p1,p2);
+  check(serviceRequest&&!serviceNextRequest&&!serviceControls.pending&&!p1&&!p2,"explicit menu entry sends exactly one Test pulse without either Start");
+  sampleStartButtons(1'400'000'000LL,true,true,false,true,p1,p2);
+  check(!serviceRequest&&!serviceNextRequest&&!p1&&!p2,"buttons held through menu entry cannot select again or start P2");
+  sampleStartButtons(1'500'000'000LL,false,false,false,true,p1,p2);
+  sampleStartButtons(2'000'000'000LL,true,false,false,true,p1,p2);
+  check(serviceNextRequest&&!serviceRequest&&!p1&&!p2,"Service X navigates native options while game readiness is false");
+  sampleStartButtons(2'090'000'000LL,false,false,false,true,p1,p2);
+  check(!serviceNextRequest,"rapid Next taps have a native release edge");
+  sampleStartButtons(2'120'000'000LL,true,false,false,true,p1,p2);
+  check(serviceNextRequest,"a second rapid Next tap stays separate");
+  sampleStartButtons(2'300'000'000LL,false,false,false,true,p1,p2);
+  sampleStartButtons(3'000'000'000LL,false,true,false,true,p1,p2);
+  check(serviceRequest&&!serviceNextRequest&&!p1&&!p2,"short A selects immediately inside Service without game Start");
+  sampleStartButtons(3'090'000'000LL,false,false,false,true,p1,p2);
+  check(!serviceRequest,"rapid Select taps have a native release edge");
+  sampleStartButtons(3'120'000'000LL,false,true,false,true,p1,p2);
+  check(serviceRequest,"second rapid Select tap stays separate");
+  resetStartGestures();sampleStartButtons(4'000'000'000LL,true,true,false,true,p1,p2);
+  check(serviceControls.active&&!serviceRequest&&!serviceNextRequest&&!p1&&!p2,"focus or sync recovery preserves mode but consumes held A/X");
+  sampleStartButtons(4'100'000'000LL,false,false,false,true,p1,p2);
+  sampleStartButtons(5'000'000'000LL,true,false,false,true,p1,p2);
+  check(serviceNextRequest,"fresh native Next works after focus recovery");
+  serviceControls.cancel();openServiceMenu();sampleStartButtons(6'000'000'000LL,false,false,false,true,p1,p2);
+  check(serviceControls.active&&!serviceRequest&&!serviceNextRequest,"reopening an already active Service row only resumes it without another Test");
+  sampleStartButtons(7'000'000'000LL,false,true,true,true,p1,p2);
+  check(!p1&&!p2,"returning native readiness alone cannot close Service or start a player");
+  notifyServiceGameBoot();sampleStartButtons(8'000'000'000LL,true,true,true,true,p1,p2);
+  check(!serviceControls.active&&!serviceRequest&&!serviceNextRequest&&!p1&&!p2,"native main boot automatically clears Service without B and consumes the exit press");
+  sampleStartButtons(8'100'000'000LL,false,false,true,true,p1,p2);
+  sampleStartButtons(9'000'000'000LL,false,true,true,true,p1,p2);
+  check(p1&&!p2&&!serviceRequest,"a fresh A starts P1 normally after native EXIT without a B step");
+  serviceControls.request(serviceGameBootGeneration.load());config::GGPOEnable.value=true;
+  sampleStartButtons(10'000'000'000LL,false,false,true,true,p1,p2);
+  check(!serviceControls.active&&!serviceRequest&&!serviceNextRequest,"online transition clears Service mode and native pulses");
+  config::GGPOEnable.value=false;serviceControls.request(serviceGameBootGeneration.load());newGame=true;resetForNewGame();
+  check(!serviceControls.active&&!serviceRequest&&!serviceNextRequest,"new game clears Service mode and pending input");
+  reset();autoAccept=false;serviceControls.request(serviceGameBootGeneration.load());p2JoinPending=true;starts[Left]=true;frame();
+  check(!p2JoinPending&&!dualWield&&lastP2==0,"Service mode cancels speculative P2 requests");
+  serviceControls.reset();
+ }
+ for(const char* id:{"ninjaslt","gunsur2","NINJA ASSAULT"," BIOHAZARD  GUN SURVIVOR2"}) {
+  bool p1=false,p2=false;reset();settings.content.gameId=id;
+  check(!serviceMenuExitAvailable(),"ordinary Namco gameplay shows only explicit Service entry");
+  chooseServiceRow();chooseServiceRow();check(serviceControls.pending&&!serviceControls.exiting,"two Service selects in one frame queue entry once");sampleStartButtons(1'000'000'000LL,false,false,true,true,p1,p2);
+  check(serviceEntryRequest&&!serviceSelectRequest&&serviceMenuExitAvailable(),"Namco menu entry uses native Test only");
+  sampleStartButtons(1'300'000'000LL,false,false,true,true,p1,p2);
+  sampleStartButtons(2'000'000'000LL,true,false,true,true,p1,p2);
+  auto bits=vr::xr::serviceButtons(0,true,serviceEntryRequest,1,serviceNextRequest,4,serviceSelectRequest,16);
+  check(bits==4&&!p1&&!p2,"Namco X injects only native menu Down");
+  sampleStartButtons(2'200'000'000LL,false,false,true,true,p1,p2);
+  sampleStartButtons(3'000'000'000LL,false,true,true,true,p1,p2);
+  const unsigned enter=serviceStyle(id)==ServiceStyle::Ninja?16:32;
+  bits=vr::xr::serviceButtons(0,true,serviceEntryRequest,1,serviceNextRequest,4,serviceSelectRequest,enter);
+  check(bits==enter&&!serviceEntryRequest&&!p1&&!p2,"Namco A injects the title's Enter without toggling Test or starting players");
+  chooseServiceRow();chooseServiceRow();sampleStartButtons(4'000'000'000LL,true,true,true,false,p1,p2);
+  check(serviceControls.pending&&serviceControls.exiting&&!serviceRequest,"Namco Exit Service Menu waits for resume");
+  sampleStartButtons(5'000'000'000LL,true,true,true,true,p1,p2);
+  check(serviceEntryRequest&&!serviceSelectRequest&&!serviceNextRequest&&!p1&&!p2,"only the explicit Namco Exit row sends the return Test toggle");
+  notifyServiceGameBoot();sampleStartButtons(5'100'000'000LL,true,true,true,true,p1,p2);
+  check(!serviceControls.active&&!serviceMenuExitAvailable()&&!serviceRequest&&!p1&&!p2,"native Namco return automatically clears mapping and consumes held inputs");
+ }
+ {
+  NativeJvsMapper mapper;mapper.init_mappings();u32 buttons[4]{},native[4]{};
+  buttons[0]=vr::xr::serviceButtons(0,true,false,NAOMI_TEST_KEY,false,NAOMI_DOWN_KEY,true,serviceEnterMask(ServiceStyle::Ninja));
+  mapper.read_digital_in(buttons,native);
+  check(native[0]==NAOMI_BTN0_KEY&&native[1]==0,"actual Ninja JVS descriptor maps Service A to only cabinet Enter");
+  buttons[0]=NAOMI_DOWN_KEY;mapper.read_digital_in(buttons,native);
+  check(native[0]==NAOMI_DOWN_KEY&&native[1]==0,"actual Ninja JVS descriptor preserves Service X Down");
  }
  std::printf("%s %d production assignment checks (%d failures)\n",failures?"FAIL":"PASS",checks,failures);return failures?1:0;
 }

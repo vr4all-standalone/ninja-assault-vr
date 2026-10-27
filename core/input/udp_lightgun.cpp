@@ -59,7 +59,7 @@ std::atomic<bool> running;
 u32 lastButtons[4];
 vr::GunInput gunInputs[4];
 std::atomic<int64_t> lastPacketMs[4];
-std::atomic<bool> serviceRequested { false };
+std::atomic<u32> serviceRequested { 0 };
 std::atomic<int64_t> serviceUpdated { 0 };
 
 int64_t nowMs() {
@@ -102,15 +102,25 @@ void handle(const char *msg)
 
 }
 
-void lightgunService(bool pressed)
+void lightgunService(bool pressed, bool next, bool select)
 {
 	serviceUpdated = nowMs();
-	serviceRequested = pressed;
+	serviceRequested = (pressed ? 1u : 0u) | (next ? 2u : 0u) | (select ? 4u : 0u);
 }
 
 bool lightgunServiceActive()
 {
-	return serviceRequested.load() && nowMs() - serviceUpdated.load() < 500;
+	return (serviceRequested.load() & 1u) && nowMs() - serviceUpdated.load() < 500;
+}
+
+bool lightgunServiceNextActive()
+{
+	return (serviceRequested.load() & 2u) && nowMs() - serviceUpdated.load() < 500;
+}
+
+bool lightgunServiceSelectActive()
+{
+    return (serviceRequested.load() & 4u) && nowMs() - serviceUpdated.load() < 500;
 }
 
 void lightgunSet(int player, int x, int y, u32 buttons)

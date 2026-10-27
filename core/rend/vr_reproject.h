@@ -129,6 +129,8 @@ bool player2Prompting();
 bool playerInGame(int player);
 // Guarded native code/state is ready for Start, including the inactive title screen.
 bool gameStartReady();
+// Last guarded native snapshot remains valid while the VR menu pauses emulation.
+bool gameStartLoaded();
 // The game shows one of its cutscenes during a game in progress: its letterbox bars (the profile's
 // letterboxTextures) in 18 of its frames in a row while a player is in the game (gunRam.playing),
 // until the sixth frame without them. Always false for a profile without both (HOTD2, MOK).

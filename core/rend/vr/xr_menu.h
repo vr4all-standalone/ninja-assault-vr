@@ -17,7 +17,7 @@
 namespace vr::xr::menu
 {
 
-enum Row { Resume, Recenter, Gun, GunAngle, Reload, Hands, Laser, Haptics, WorldSize, PanelDistance, WiderView, HowToPlay, Quit, Rows };
+enum Row { Resume, Recenter, Gun, GunAngle, Reload, Hands, Laser, Haptics, WorldSize, PanelDistance, WiderView, HowToPlay, ServiceMenu, Quit, Rows };
 
 // What the controllers did in a headset frame. The buttons are edges (just pressed); the rays,
 // one per hand (0 left, 1 right), are in the game camera's room space, with their trigger's click.

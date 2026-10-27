@@ -3,6 +3,7 @@
 */
 
 #include "types.h"
+#include "hw/naomi/naomi_boot.h"
 
 #include "../sh4_interpreter.h"
 #include "../sh4_opcode_list.h"
@@ -29,6 +30,7 @@ void Sh4Interpreter::ExecuteOpcode(u16 op)
 u16 Sh4Interpreter::ReadNexOp()
 {
 	u32 addr = ctx->pc;
+    observeNaomiGameBoot(addr, ctx->r[1]);
 	if (!mmu_enabled() && (addr & 1))
 		// address error
 		throw SH4ThrownException(addr, Sh4Ex_AddressErrorRead);

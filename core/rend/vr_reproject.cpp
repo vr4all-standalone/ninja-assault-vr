@@ -1020,6 +1020,11 @@ static u32 gunBlock(const GameProfile *prof, int player)
 	return 0x8C000000u | ((prof->gunRam.base + player * prof->gunRam.stride) & 0x01FFFFFFu);
 }
 
+bool gameStartLoaded()
+{
+	return startInputReady.load();
+}
+
 bool gameStartReady()
 {
 	return emu.running() && startInputReady.load();

@@ -40,6 +40,8 @@ void haptic(int hand,float,float){hapticHand=hand;}
 #define NOTICE_LOG(...)
 namespace controllers {enum Button{A,B,X,Y,Menu,Stick,Trigger,Grip,Buttons};}
 using controllers::Button;
+#include "../../core/rend/vr/service_controls.h"
+vr::xr::ServiceControls serviceControls;
 #include "dual_hands_under_test.inc"
 int checks=0,failures=0;
 void check(bool okay,const char* message){++checks;if(!okay){++failures;std::fprintf(stderr,"FAIL %s\n",message);}}

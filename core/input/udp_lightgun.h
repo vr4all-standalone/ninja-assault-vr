@@ -18,6 +18,8 @@ void lightgunSet(int player, int x, int y, u32 buttons);
 // Mouse and analog-stick aiming stand aside meanwhile, so they can't fight over the crosshair.
 bool udpLightgunActive(int port);
 
-// Explicit XR cabinet Test request, kept separate from normal Start and legacy mappings.
-void lightgunService(bool pressed);
+// Explicit XR cabinet entry/exit Test, Next and Select; separate from ordinary Start.
+void lightgunService(bool pressed, bool next=false, bool select=false);
 bool lightgunServiceActive();
+bool lightgunServiceNextActive();
+bool lightgunServiceSelectActive();

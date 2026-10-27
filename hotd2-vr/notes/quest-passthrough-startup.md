@@ -53,24 +53,27 @@ Automated coverage: 115 production hand/join/reset/gesture checks per game (805 
 77 startup contract checks across seven, and all 455 Android unit tests. Existing
 Ninja hand-safety (243) and MOK reload/render/profile (19) checks also pass.
 
-## Deliberate Service access
+## Service access (updated)
 
-On Quest Touch/Touch Pro/Touch Plus controllers and Index controllers with a
-physical A button, a short A press emits a bounded Start pulse on release. It
-keeps the player who owned that button when pressed. Holding A for three seconds
-shows a purple VR4ALL progress notice and emits one 200 ms cabinet Test pulse,
-with no ordinary Start on release. Release is required for another service hold.
-The service gesture is offline only; online play retains synchronized Start.
-Vive/WMR menu-button mappings retain their existing Start behavior.
+The in-game VR menu now has **Open Service Menu** immediately above **Quit**.
+The former A-hold shortcut is removed. Normal A starts immediately after loading;
+no XR controller button opens Service directly. The menu row is available after
+initial game loading, offline with VR guns enabled, including while paused.
 
-A/X native Start is blocked until the existing guarded game reader reports that
-the title's code/state is loaded. A button held during loading must be released
-before a fresh Start can pass. Focus loss, action sync failure, settings,
-preparation, new games, loaded states and termination cancel gesture state.
-A separate atomic Test request is merged after game-specific cabinet ownership,
-including Survivor; unrelated existing keyboard/gamepad cabinet controls remain
-available. No camera data is collected by this feature.
+Inside standard NAOMI Service, X sends native Service/Next and A sends native Test/Select.
+A purple guide sits below the native menu rows. Choose the native System EXIT to
+restart and restore game controls automatically; no B step is required. Submenu
+and Game Test transitions preserve Service navigation. A/X cannot request either
+player's Start or spawn P2 while Service controls are active.
 
-The Quest Android duplicate-event guard now covers physical A and X. The user
-confirmed corrected P2 joining on the connected Quest 3S. Physical verification
-of the final short-A / hold-A Service gesture is recorded with the release run.
+Focus loss, settings and action-sync failure clear pulses and require release.
+Existing Android duplicate A/X suppression, native-confirmed P2 joining, saved
+hand assignments, passthrough launch and ordinary external cabinet input remain.
+See service-menu-controls.md for the current behavior and release validation.
+
+Ninja Assault and Survivor use Namco's native operator menu: **X = Down**,
+**A = Enter**, with the stick also available for Up/Down. While it is open,
+the same VR menu row reads **Exit Service Menu** and sends the native return
+command after resuming. The guide and ordinary gameplay controls restore
+automatically after the game leaves its operator menu. A alone never opens or
+closes Service during ordinary gameplay.

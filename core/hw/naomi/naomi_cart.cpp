@@ -22,6 +22,9 @@
 
 #include <memory>
 #include "naomi_cart.h"
+#include "hw/sh4/sh4_mem.h"
+#include "rend/vr/ninja_service.h"
+#include "rend/vr/xr_host.h"
 #include "naomi_regs.h"
 #include "naomi.h"
 #include "decrypt.h"
@@ -50,6 +53,29 @@
 #include "oslib/i18n.h"
 
 using namespace i18n;
+
+namespace {
+vr::ninja::ServiceExitObserver ninjaServiceExit;
+void resetNinjaServiceExit(Event, void *) {ninjaServiceExit.reset();}
+void observeNinjaServiceExit(Event, void *) {
+    if (!settings.platform.isNaomi() || settings.content.gameId != "NINJA ASSAULT")
+        return;
+    if (ninjaServiceExit.poll(
+            [](unsigned offset) {return ReadMem16_nommu(0x0c000000u + offset);},
+            [](unsigned offset) {return ReadMem32_nommu(0x0c000000u + offset);})) {
+        NOTICE_LOG(NAOMI, "Ninja: native Test menu returned to the game");
+        vr::xr::notifyServiceGameBoot();
+    }
+}
+struct NinjaServiceExitRegistration {
+    NinjaServiceExitRegistration() {
+        EventManager::listen(Event::Start, resetNinjaServiceExit);
+        EventManager::listen(Event::LoadState, resetNinjaServiceExit);
+        EventManager::listen(Event::Terminate, resetNinjaServiceExit);
+        EventManager::listen(Event::VBlank, observeNinjaServiceExit);
+    }
+} ninjaServiceExitRegistration;
+}
 
 Cartridge *CurrentCartridge;
 bool bios_loaded = false;

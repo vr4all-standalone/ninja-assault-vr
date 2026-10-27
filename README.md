@@ -5,7 +5,7 @@
 # Ninja Assault VR
 ### SEGA NAOMI Light-Gun Action · Standalone Meta Quest & PC VR
 
-[![Release v1.0.4](https://img.shields.io/badge/Release-v1.0.4_Experimental-e49c35?style=for-the-badge)](https://github.com/vr4all-standalone/ninja-assault-vr/releases/latest)
+[![Release v1.0.5](https://img.shields.io/badge/Release-v1.0.5_Experimental-e49c35?style=for-the-badge)](https://github.com/vr4all-standalone/ninja-assault-vr/releases/latest)
 [![Quest and PC VR](https://img.shields.io/badge/Headset-Quest_%C2%B7_PC_VR_OpenXR-blue?style=for-the-badge)](#installation)
 [![Original game required](https://img.shields.io/badge/Your_Game-ninjaslt_World_NJA2_Ver.A-orange?style=for-the-badge)](#what-you-need)
 
@@ -212,12 +212,27 @@ Run `powershell -NoProfile -File hotd2-vr/player-assignment-test.ps1` on a Windo
 
 ## Quest Start and Service buttons
 
-Play can launch immersive VR from Quest Home in passthrough or a virtual home.
-After loading, tap and release **A** to start P1. **X** requests P2 where the game
-supports local two-player play, after P1 has started; the second gun appears only
-when the game accepts P2. In two-player mode, short Start presses follow the saved
-hand assignment. Survivor retains its native single-player controls.
+Play launches immersive VR from passthrough or a virtual Quest Home. After loading,
+**A** starts P1; **X** requests P2 where supported, after P1 has started. The second
+gun appears only after native P2 acceptance. Two-player Starts follow the saved hand
+assignment. Survivor retains its native single-player controls.
 
-Hold the right controller's **A for 3 seconds** to open the arcade Service menu.
-A purple progress notice shows the hold. Releasing early acts as a normal Start;
-releasing after Service opens does not send Start. Service holds are offline only.
+To enter Service, open the in-game VR menu and choose **Open Service Menu**, directly
+above **Quit**. Holding A does not open Service. Normal controller buttons do not
+enter the arcade menu; the row is available after initial loading, offline with VR guns enabled.
+
+Inside standard NAOMI Service, **X = Next** and **tap A = Select**. The purple guide appears below
+the native menu. Choose the native **EXIT** option to restart the game and restore
+normal controls automatically; there is no B step. Leaving a submenu keeps Service
+navigation available. Aiming, triggers and directions remain usable for native tests.
+
+Held A/X inputs require release after opening, settings or focus recovery. Native
+main-game boot and new game/session resets clear Service controls. Existing external
+keyboard/gamepad cabinet controls remain available.
+
+Ninja Assault and Survivor use Namco's native operator menu: **X = Down**,
+**A = Enter**, with the stick also available for Up/Down. While it is open,
+the same VR menu row reads **Exit Service Menu** and sends the native return
+command after resuming. The guide and ordinary gameplay controls restore
+automatically after the game leaves its operator menu. A alone never opens or
+closes Service during ordinary gameplay.
