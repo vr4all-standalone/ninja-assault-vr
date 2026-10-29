@@ -92,6 +92,7 @@ std::vector<GunChoice> gunChoices();
 
 struct HandsView
 {
+	int player = 0;		// logical player identity (0 P1, 1 P2), independent of hand
 	const HandsModel *model = nullptr;	// which: handsModel() or a gunModel() (handModel())
 	glm::mat4 gunPose;		// gun space -> room space
 	float slide = 0.f;		// metres the slide is back

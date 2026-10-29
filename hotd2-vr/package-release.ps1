@@ -29,7 +29,7 @@
   (core\deps\cgltf\LICENSE) in it; -CheckOnly checks that too.
 
   A release is built from a commit, the one its published source is: the working tree must be
-  clean (the gamesdk submodule's local change aside), and the APK's versionName (1.0.5-g<commit>),
+  clean (the gamesdk submodule's local change aside), and the APK's versionName (1.0.6-g<commit>),
   its libflycast.so and flycast.exe must all name HEAD (a -SkipBuild after a new commit fails
   that). -AllowDebugKey test builds skip both checks.
 
@@ -52,7 +52,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 # src\vr\AndroidManifest.xml), its library entry, and the PC zip's start script (hotd2-vr\assets).
 $appId = 'com.vrlightgunhub.ninjaassault'
 $appLabel = 'Ninja Assault VR'
-$appVersion = '1.0.5'
+$appVersion = '1.0.6'
 $appLauncher = 'com.flycast.emulator.NinjaStartActivity'
 $playCmd = 'Play Ninja Assault.cmd'
 

@@ -139,7 +139,7 @@ const cgltf_accessor *attribute(const cgltf_primitive& prim, cgltf_attribute_typ
 	return nullptr;
 }
 
-void addPrimitive(const cgltf_primitive& prim, const glm::mat4& world, Reader& reader)
+void addPrimitive(const cgltf_primitive& prim, const glm::mat4& world, Reader& reader, const char *meshName)
 {
 	GlbMesh& out = reader.out;
 	if (prim.type != cgltf_primitive_type_triangles && prim.type != cgltf_primitive_type_triangle_strip
@@ -265,6 +265,8 @@ void addPrimitive(const cgltf_primitive& prim, const glm::mat4& world, Reader& r
 		part.firstIndex = (u32)firstIndex;
 		part.indexCount = (u32)(out.indices.size() - firstIndex);
 		part.image = imageIndex;
+		part.meshName = meshName != nullptr ? meshName : "";
+		part.materialName = prim.material != nullptr && prim.material->name != nullptr ? prim.material->name : "";
 		if (prim.material != nullptr && prim.material->has_pbr_metallic_roughness)
 			for (int k = 0; k < 4; k++)
 				part.color[k] = prim.material->pbr_metallic_roughness.base_color_factor[k];
@@ -306,7 +308,7 @@ void addNode(const cgltf_node *node, Reader& reader, int depth)
 		cgltf_node_transform_world(node, world);
 		const glm::mat4 m = glm::make_mat4(world);
 		for (cgltf_size i = 0; i < node->mesh->primitives_count && !reader.tooBig; i++)
-			addPrimitive(node->mesh->primitives[i], m, reader);
+			addPrimitive(node->mesh->primitives[i], m, reader, node->mesh->name != nullptr ? node->mesh->name : node->name);
 	}
 	for (cgltf_size i = 0; i < node->children_count; i++)
 		addNode(node->children[i], reader, depth + 1);

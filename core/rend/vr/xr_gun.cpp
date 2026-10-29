@@ -10,6 +10,7 @@
 	Copyright 2026 mikermak. This file is part of Flycast and is distributed under the GNU GPL v2 or later.
 */
 #include "xr_gun.h"
+#include "arcade_gun_color.h"
 #include "xr_theme.h"
 #include "xr_hands.h"
 #include "gun_model.h"
@@ -273,9 +274,8 @@ void main()
 }
 
 void drawModel(const glm::mat4& viewProj, const glm::vec3& eyePos, const glm::mat4& pose, const glm::vec4& muzzleLight,
-		const glm::vec3& tint)
+		const glm::vec3& baseColor)
 {
-	const bool tinted = tint != glm::vec3(1.f);
 	glcache.UseProgram(modelProgram);
 	const glm::mat4 mvp = viewProj * pose;
 	glUniformMatrix4fv(mMvp, 1, GL_FALSE, &mvp[0][0]);
@@ -291,9 +291,8 @@ void drawModel(const glm::mat4& viewProj, const glm::vec3& eyePos, const glm::ma
 		for (const PartMaterial& pm : Materials)
 			if (!strcmp(pm.name, part.name))
 				m = &pm.material;
-		// Tinted, each part takes the tint's hue at its own brightness next to the shell's (the
-		// red shell the tint itself): multiplying the candy red by olive would only darken it.
-		const glm::vec3 color = tinted ? tint * (std::max({ m->color.r, m->color.g, m->color.b }) / Materials[0].material.color.r) : m->color;
+		// Full player color on body/grip; retain the metal and smoked-lens materials.
+		const glm::vec3 color = arcadeGunPlasticPart(part.name) ? baseColor : m->color;
 		glUniform3f(mColor, color.r, color.g, color.b);
 		glUniform1f(mSpecular, m->specular);
 		glUniform1f(mShininess, m->shininess);
@@ -418,6 +417,7 @@ void drawGunModel(const glm::mat4& viewProj, const glm::vec3& eyePos, const GunV
 	{
 		HandsView hands;
 		hands.model = model;
+		hands.player = gun.player;
 		hands.gunPose = gun.pose;
 		hands.slide = gun.slide;
 		hands.otherHand = gun.otherHand;
@@ -426,7 +426,7 @@ void drawGunModel(const glm::mat4& viewProj, const glm::vec3& eyePos, const GunV
 		drawHands(viewProj, eyePos, hands);
 	}
 	else
-		drawModel(viewProj, eyePos, gun.pose, muzzleLight, tint);
+		drawModel(viewProj, eyePos, gun.pose, muzzleLight, arcadeGunBaseColor(gun.player));
 	logGlErrors("gun");
 }
 

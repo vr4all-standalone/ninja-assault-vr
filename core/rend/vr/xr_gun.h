@@ -87,7 +87,8 @@ float gunKick(float sinceShot);
 // then every gun's glow (aim line and dot, flash; the smoke of all guns with the first), so
 // one gun's model never covers the other's dot or flash.
 // viewProj: room space -> this eye's clip space; eyePos: the eye, in room space.
-// tint: the arcade gun's colours ({1,1,1}: its own red; a game's model keeps its own).
+// Arcade colors follow gun.player (P1 red, P2 blue), including the baked fallback.
+// tint: retained for caller compatibility; native and unrelated folder models keep their own colors.
 void drawGunModel(const glm::mat4& viewProj, const glm::vec3& eyePos, const GunView& gun, bool clearDepth, const glm::vec3& tint);
 void drawGunGlow(const glm::mat4& viewProj, const glm::vec3& eyePos, const GunView& gun, bool withSmoke);
 // The GL context is going away.

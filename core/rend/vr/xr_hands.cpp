@@ -31,6 +31,7 @@
 	Copyright 2026 mikermak. This file is part of Flycast and is distributed under the GNU GPL v2 or later.
 */
 #include "xr_hands.h"
+#include "arcade_gun_color.h"
 #include "hands_rip.h"
 #include "glb_mesh.h"
 #include "xr_own.h"
@@ -82,6 +83,7 @@ struct Part
 {
 	u32 texture;
 	u32 first, count;	// vertices
+	bool arcadePlastic = false;	// semantic GLB surface, never inferred from RGB/texture
 };
 constexpr size_t VertexSize = 36;
 
@@ -126,7 +128,7 @@ std::vector<std::unique_ptr<OwnGun>> ownGuns;
 unsigned ownGeneration;		// own::gunsGeneration() they were scanned at
 
 GLuint program;
-GLint uMvp = -1, uModel = -1, uEye = -1, uSpecular = -1, uShininess = -1, uAlphaTest = -1, uLight = -1, uTex = -1;
+GLint uMvp = -1, uModel = -1, uEye = -1, uSpecular = -1, uShininess = -1, uAlphaTest = -1, uLight = -1, uTex = -1, uArcadeBaseColor = -1;
 
 // A model's file into `model`; false without one it can read (`missing`: no file at all).
 bool load(Model& model, std::string path, const std::string& legacy, bool& missing)
@@ -258,12 +260,13 @@ void main()
 }
 )");
 	OpenGlSource fragment;
-	fragment.addSource(PixelCompatShader).addSource(R"(
+	fragment.addSource(PixelCompatShader).addSource(ArcadeModelBaseSource).addSource(R"(
 uniform sampler2D tex;
 uniform highp vec3 eyePos;
 uniform mediump float specular;
 uniform mediump float shininess;
 uniform lowp float alphaTest;
+uniform mediump vec4 arcadeBaseColor; // RGB absolute player base, A enable flag
 uniform highp vec4 muzzleLight;	// room position, strength
 in highp vec3 vtx_pos;
 in highp vec3 vtx_normal;
@@ -271,7 +274,7 @@ in highp vec2 vtx_uv;
 in lowp vec4 vtx_color;
 void main()
 {
-	lowp vec4 base = texture(tex, vtx_uv) * vtx_color;
+	lowp vec4 base = arcadeModelBase(texture(tex, vtx_uv), vtx_color, arcadeBaseColor);
 	if (base.a < alphaTest)
 		discard;
 	highp vec3 n = normalize(vtx_normal);
@@ -308,6 +311,7 @@ void main()
 	uAlphaTest = glGetUniformLocation(program, "alphaTest");
 	uLight = glGetUniformLocation(program, "muzzleLight");
 	uTex = glGetUniformLocation(program, "tex");
+	uArcadeBaseColor = glGetUniformLocation(program, "arcadeBaseColor");
 	return true;
 }
 
@@ -373,7 +377,7 @@ void releaseGl(Model& model)
 		}
 }
 
-void drawMesh(const Model& model, int mesh, const glm::mat4& viewProj, const glm::mat4& pose, float specular, float shininess)
+void drawMesh(const Model& model, int mesh, const glm::mat4& viewProj, const glm::mat4& pose, float specular, float shininess, const glm::vec4& arcadeBase = glm::vec4(0.f))
 {
 	const glm::mat4 mvp = viewProj * pose;
 	glUniformMatrix4fv(uMvp, 1, GL_FALSE, &mvp[0][0]);
@@ -383,6 +387,9 @@ void drawMesh(const Model& model, int mesh, const glm::mat4& viewProj, const glm
 	for (const Part& part : model.meshes[mesh])
 	{
 		const Texture& t = model.textures[part.texture];
+		// Every part writes the enable flag, including metal and every unrelated model.
+		const glm::vec4 color = part.arcadePlastic ? arcadeBase : glm::vec4(0.f);
+		glUniform4f(uArcadeBaseColor, color.r, color.g, color.b, color.a);
 		glcache.BindTexture(GL_TEXTURE_2D, t.id);
 		glUniform1f(uAlphaTest, t.flags & 16 ? 0.5f : -1.f);
 		glDrawArrays(GL_TRIANGLES, (GLint)part.first, (GLsizei)part.count);
@@ -459,17 +466,19 @@ bool loadOwnGun(Model& model, const own::GunFile& file, std::string& why)
 		model.textures.push_back(std::move(t));
 	}
 	model.vertices.reserve(mesh.indices.size() * VertexSize);
-	// the primitives that share a colour and a texture drawn as one part (a draw each)
-	struct Group { u8 rgba[4]; u32 texture; std::vector<const GlbPart *> parts; };
+	// Batch only matching material identities, colours, textures and semantic surface roles.
+	struct Group { u8 rgba[4]; u32 texture; std::string materialName; bool arcadePlastic; std::vector<const GlbPart *> parts; };
 	std::vector<Group> groups;
 	for (const GlbPart& gp : mesh.parts)
 	{
 		Group g {};
+		g.materialName = gp.materialName;
+		g.arcadePlastic = arcadeGunPlasticPart(gp.meshName.c_str());
 		for (int k = 0; k < 4; k++)
 			g.rgba[k] = (u8)std::lround(std::clamp(gp.color[k], 0.f, 1.f) * 255.f);
 		g.texture = gp.image >= 0 && gp.image + 1 < (int)model.textures.size() ? (u32)gp.image + 1 : 0;
 		auto same = std::find_if(groups.begin(), groups.end(),
-				[&](const Group& o) { return o.texture == g.texture && memcmp(o.rgba, g.rgba, 4) == 0; });
+				[&](const Group& o) { return o.texture == g.texture && o.materialName == g.materialName && o.arcadePlastic == g.arcadePlastic && memcmp(o.rgba, g.rgba, 4) == 0; });
 		if (same == groups.end())
 			same = groups.insert(groups.end(), g);
 		same->parts.push_back(&gp);
@@ -485,6 +494,7 @@ bool loadOwnGun(Model& model, const own::GunFile& file, std::string& why)
 		}
 		Part part;
 		part.texture = g.texture;
+		part.arcadePlastic = g.arcadePlastic;
 		part.first = (u32)(model.vertices.size() / VertexSize);
 		part.count = 0;
 		for (const GlbPart *gp : g.parts)
@@ -817,12 +827,16 @@ std::vector<GunChoice> gunChoices()
 void drawHands(const glm::mat4& viewProj, const glm::vec3& eyePos, const HandsView& view)
 {
 	Model *found = nullptr;
+	bool arcade = false;
 	for (Slot& slot : slots)
 		if (slot.loaded && view.model == &slot.model.info)
 			found = &slot.model;
 	for (auto& gun : ownGuns)
 		if (gun->loaded && view.model == &gun->model.info)
+		{
 			found = &gun->model;
+			arcade = own::sameStem(gun->file.stem, ArcadeGunStem);
+		}
 	if (found == nullptr || !initGl())
 		return;
 	// every model loaded goes to the GPU at the first draw, not just this one: the assault
@@ -844,6 +858,8 @@ void drawHands(const glm::mat4& viewProj, const glm::vec3& eyePos, const HandsVi
 		}
 	Model& model = *found;
 	glcache.UseProgram(program);
+	// Logical-player RGB is enabled only by named plastic parts in drawMesh.
+	const glm::vec4 arcadeBase = arcade ? glm::vec4(arcadeGunBaseColor(view.player), 1.f) : glm::vec4(0.f);
 	glUniform3f(uEye, eyePos.x, eyePos.y, eyePos.z);
 	glUniform4f(uLight, view.muzzleLight.x, view.muzzleLight.y, view.muzzleLight.z, view.muzzleLight.w);
 	glUniform1i(uTex, 0);
@@ -851,8 +867,8 @@ void drawHands(const glm::mat4& viewProj, const glm::vec3& eyePos, const HandsVi
 	bindVertexArray(model.vao);
 
 	// metal with a sheen, skin and cotton matt
-	drawMesh(model, MeshFrame, viewProj, view.gunPose, 0.35f, 40.f);
-	drawMesh(model, MeshSlide, viewProj, glm::translate(view.gunPose, glm::vec3(0.f, 0.f, view.slide)), 0.45f, 50.f);
+	drawMesh(model, MeshFrame, viewProj, view.gunPose, 0.35f, 40.f, arcadeBase);
+	drawMesh(model, MeshSlide, viewProj, glm::translate(view.gunPose, glm::vec3(0.f, 0.f, view.slide)), 0.45f, 50.f, arcadeBase);
 	// The hero's gloves came out mirrored in the headset (the other hand a right glove on
 	// the left controller: the one around his staff seems to be his left), so both are
 	// drawn mirrored in x about their own origin; the staff itself stays as it is.
@@ -879,7 +895,7 @@ void termHands()
 	// (their vertices and textures dropped once uploaded: read again from the file when next chosen)
 	for (auto& gun : ownGuns)
 		unloadOwn(*gun);
-	uMvp = uModel = uEye = uSpecular = uShininess = uAlphaTest = uLight = uTex = -1;
+	uMvp = uModel = uEye = uSpecular = uShininess = uAlphaTest = uLight = uTex = uArcadeBaseColor = -1;
 }
 
 }

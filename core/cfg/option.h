@@ -24,6 +24,7 @@
 #include <cmath>
 #include <type_traits>
 #include "cfg.h"
+#include "rend/vr/gun_angle_settings.h"
 #include "hw/maple/maple_cfg.h"
 #ifdef LIBRETRO
 #include <libretro.h>
@@ -505,7 +506,8 @@ extern Option<bool> VrDropShotFlash;
 extern Option<std::string> VrHaptics;
 extern Option<int> VrGun;
 extern Option<std::string> VrGunFile;
-extern Option<int> VrGunAngle;
+using GunAngleOption = vr::gun_angle::Setting<Option<int, false>>;
+extern GunAngleOption VrGunAngle;
 extern Option<int> VrReload;
 extern Option<bool> VrDualP1Left;
 extern Option<bool> CustomTextures;

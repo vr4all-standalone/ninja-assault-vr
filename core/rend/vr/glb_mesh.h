@@ -18,8 +18,9 @@ namespace vr::xr
 struct GlbImage { int width = 0, height = 0; std::vector<u8> rgba; };
 // A primitive's triangles: indices[firstIndex, firstIndex + indexCount), its material's base
 // colour factor (RGBA; 1, 1, 1, 1 without one) and base colour image (an index into images; -1:
-// none, or not decoded).
-struct GlbPart { u32 firstIndex = 0, indexCount = 0; float color[4] { 1.f, 1.f, 1.f, 1.f }; int image = -1; };
+// none, or not decoded). Mesh/material names retain semantic identity through later batching.
+struct GlbPart { u32 firstIndex = 0, indexCount = 0; float color[4] { 1.f, 1.f, 1.f, 1.f }; int image = -1;
+	std::string meshName, materialName; };
 
 // Every triangle of the default scene (else of every node), in the file's own space (glTF:
 // metres, y up) with the node transforms applied: positions and normals x, y, z, texture

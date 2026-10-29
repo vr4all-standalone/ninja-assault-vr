@@ -16,6 +16,7 @@
 #ifdef USE_OPENXR
 #include "xr_controllers.h"
 #include "xr_gun.h"
+#include "gun_angle.h"
 #include "xr_hands.h"
 #include "xr_labels.h"
 #include "xr_menu.h"
@@ -1607,10 +1608,9 @@ void updateGun(Gun& g, XrTime time, const XrSpaceLocation *locations, const bool
 		// vr.GunAngle (the menu's Gun angle): the gun tilted about the hand's side-to-side axis
 		// through the grip, + the muzzle up; the shots, the aim line and the flash with it (every
 		// gun, both hands, the rifle too)
-		const int angle = std::clamp((int)config::VrGunAngle, -30, 30);
-		const glm::mat4 tilt = glm::translate(glm::mat4(1.f), palm)
-				* glm::rotate(glm::mat4(1.f), glm::radians((float)angle), glm::vec3(1, 0, 0))
-				* glm::translate(glm::mat4(1.f), -palm);
+		const int angle = gun_angle::displayed((int)config::VrGunAngle);
+		// New displayed zero applies the old -10-degree physical pose to every consumer.
+		const glm::mat4 tilt = gun_angle::tilt(palm, angle);
 		if (g.muzzleLogged != (int)kind || g.angleLogged != angle)
 		{
 			// where shots leave, as the aim line and the flash start (Task 14b: a gun of the player's own)
