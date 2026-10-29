@@ -222,7 +222,7 @@ function Find-AppIdentityFault([string[]]$badgingLines, [string[]]$manifestTree,
     $badging = $badgingLines | Where-Object { $_ -match '^package:' } | Select-Object -First 1
     $wantVersion = [regex]::Escape("$appVersion-g") + $(if ($testBuild) { '[0-9a-f]+' } else { [regex]::Escape($shortHash) })
     if ($badging -notmatch "^package: name='$([regex]::Escape($appId))'") { "the package is not $appId" }
-    if ($badging -notmatch "versionCode='6'") { 'the versionCode is not 6' }
+    if ($badging -notmatch "versionCode='7'") { 'the versionCode is not 7' }
     if ($badging -notmatch "versionName='$wantVersion'") {
         "the versionName is not $appVersion-g$(if ($testBuild) { '<commit>' } else { $shortHash })"
     }
