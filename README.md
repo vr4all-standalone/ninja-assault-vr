@@ -5,15 +5,15 @@
 # Ninja Assault VR
 ### SEGA NAOMI Light-Gun Action · Standalone Meta Quest & PC VR
 
-[☕ Donate to VR4ALL](https://ko-fi.com/vr4all)
-
 [![Release v1.0.7](https://img.shields.io/badge/Release-v1.0.7_Experimental-e49c35?style=for-the-badge)](https://github.com/vr4all-standalone/ninja-assault-vr/releases/latest)
 [![Quest and PC VR](https://img.shields.io/badge/Headset-Quest_%C2%B7_PC_VR_OpenXR-blue?style=for-the-badge)](#installation)
 [![Original game required](https://img.shields.io/badge/Your_Game-ninjaslt_World_NJA2_Ver.A-orange?style=for-the-badge)](#what-you-need)
 
 **[⬇️ Quest APK](https://github.com/vr4all-standalone/ninja-assault-vr/releases/latest/download/ninja-assault-vr-quest.apk)** · **[🖥️ PC VR ZIP](https://github.com/vr4all-standalone/ninja-assault-vr/releases/latest/download/ninja-assault-vr-pcvr.zip)** · **[🎮 Controls](#controls)**
 
-**[🌐 VR4ALL — Standalone VR Mod Installer](https://github.com/vr4all-standalone/vr4all-standalone-vr-mod-installer)**
+**[🌐 VR4ALL — Standalone VR Mod Installer](https://github.com/vr4all-standalone/vr4all-standalone)**
+
+[☕ Donate to VR4ALL](https://ko-fi.com/vr4all)
 
 </div>
 
