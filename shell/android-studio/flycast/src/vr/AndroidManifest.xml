@@ -34,7 +34,7 @@
     <!-- no TV banner or logo: the main manifest's are Flycast's art (res/drawable-xhdpi/ic_banner.xml
          takes its place in the resources too) -->
     <application
-        android:label="Ninja Assault VR"
+        android:label="Ninja Assault - VR4ALL"
         tools:replace="android:label"
         tools:remove="android:banner,android:logo">
         <meta-data android:name="com.oculus.supportedDevices" android:value="quest2|questpro|quest3|quest3s" />

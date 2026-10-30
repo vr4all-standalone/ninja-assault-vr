@@ -5,7 +5,7 @@
 # Ninja Assault VR
 ### SEGA NAOMI Light-Gun Action · Standalone Meta Quest & PC VR
 
-[![Release v1.0.6](https://img.shields.io/badge/Release-v1.0.6_Experimental-e49c35?style=for-the-badge)](https://github.com/vr4all-standalone/ninja-assault-vr/releases/latest)
+[![Release v1.0.7](https://img.shields.io/badge/Release-v1.0.7_Experimental-e49c35?style=for-the-badge)](https://github.com/vr4all-standalone/ninja-assault-vr/releases/latest)
 [![Quest and PC VR](https://img.shields.io/badge/Headset-Quest_%C2%B7_PC_VR_OpenXR-blue?style=for-the-badge)](#installation)
 [![Original game required](https://img.shields.io/badge/Your_Game-ninjaslt_World_NJA2_Ver.A-orange?style=for-the-badge)](#what-you-need)
 
@@ -17,9 +17,9 @@
 
 ---
 
-## Update v1.0.6
+## Update v1.0.7
 
-Validated automatic entry, full P1 red/P2 blue Arcade body and grip with grey details preserved, and a new gun-angle zero matching the old -10 degree pose. Legacy angles reset once; later adjustments persist. [Release notes](docs/releases/v1.0.6.md).
+Validated automatic entry, full P1 red/P2 blue Arcade body and grip with grey details preserved, and a new gun-angle zero matching the old -10 degree pose. Legacy angles reset once; later adjustments persist. [Release notes](docs/releases/v1.0.7.md).
 
 ## Overview
 

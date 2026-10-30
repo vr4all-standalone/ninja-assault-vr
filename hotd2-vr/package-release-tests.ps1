@@ -42,7 +42,7 @@ function Archive([string]$name, [hashtable]$entries) {
 }
 try {
     Check 'Ninja application ID' ($appId -eq 'com.vrlightgunhub.ninjaassault')
-    Check 'Ninja label' ($appLabel -eq 'Ninja Assault VR')
+    Check 'Ninja label' ($appLabel -eq 'Ninja Assault - VR4ALL')
     Check 'Ninja release base version' ($appVersion -eq '1.0.5')
     Check 'Ninja setup launcher' ($appLauncher -eq 'com.flycast.emulator.NinjaStartActivity')
     Check 'Ninja PC launcher name' ($playCmd -eq 'Play Ninja Assault.cmd')
@@ -65,7 +65,7 @@ try {
     Check 'credited model accepted' (@(Find-UncreditedModels $archive).Count -eq 0)
     $gpl = Get-Content -LiteralPath (Join-Path $repo 'core/deps/picotcp/LICENSE.GPLv3') -Raw
     $mit = Get-Content -LiteralPath (Join-Path $repo 'core/deps/cgltf/LICENSE') -Raw
-    $licence = "Ninja Assault VR`n$gpl`n$mit"
+    $licence = "Ninja Assault - VR4ALL`n$gpl`n$mit"
     $archive = Archive 'licensed.zip' @{'LICENSE.txt'=$licence}
     Check 'GPL-3 and cgltf notice accepted' (-not (Find-LicenceFault $archive))
     $archive = Archive 'missing-mit.apk' @{'assets/LICENSE.txt'=$gpl}
@@ -82,7 +82,7 @@ try {
         '  E: application', '    E: activity', '      A: android:name(0x01010003)="com.flycast.emulator.NinjaStartActivity"',
         '      E: intent-filter', '        E: category', '          A: android:name(0x01010003)="android.intent.category.LAUNCHER"')
     Check 'manifest launcher parser uses activity owner' (@(Get-LauncherOwners $tree) -join ',' -eq 'com.flycast.emulator.NinjaStartActivity')
-    $badging = @("package: name='com.vrlightgunhub.ninjaassault' versionCode='6' versionName='1.0.5-gabc123'", "application-label:'Ninja Assault VR'")
+    $badging = @("package: name='com.vrlightgunhub.ninjaassault' versionCode='6' versionName='1.0.5-gabc123'", "application-label:'Ninja Assault - VR4ALL'")
     $hasIdentityCheck = [bool](Get-Command Find-AppIdentityFault -ErrorAction SilentlyContinue)
     Check 'APK metadata validator is independently testable' $hasIdentityCheck
     if ($hasIdentityCheck) {
@@ -92,7 +92,7 @@ try {
             @('version code', "versionCode='6'", "versionCode='9'"),
             @('base version', '1.0.5-gabc123', '1.2.0-gabc123'),
             @('commit version', '1.0.5-gabc123', '1.0.5-gdef456'),
-            @('label', 'Ninja Assault VR', 'Confidential Mission VR'))) {
+            @('label', 'Ninja Assault - VR4ALL', 'Confidential Mission VR'))) {
             $changed = @($badging | ForEach-Object { $_.Replace($case[1],$case[2]) })
             Check "wrong APK $($case[0]) rejected" (@(Find-AppIdentityFault $changed $tree 'abc123' $false).Count -gt 0)
         }
@@ -107,7 +107,7 @@ try {
     Check 'portable PC archive validator is independently testable' $hasPcCheck
     if ($hasPcCheck) {
         $files = @('flycast.exe','emu.cfg','README.txt','LICENSE.txt','Play Ninja Assault.cmd')
-        $readme = 'Ninja Assault VR. Implementation in progress. World NJA2 Ver.A. roms\ninjaslt.zip roms\naomi.zip Play Ninja Assault.cmd'
+        $readme = 'Ninja Assault - VR4ALL. Implementation in progress. World NJA2 Ver.A. roms\ninjaslt.zip roms\naomi.zip Play Ninja Assault.cmd'
         $entries = @{'flycast.exe'='synthetic'; 'emu.cfg'="[config]`npvr.rend = 0`nrend.NativeDepthInterpolation = yes`nvr.Xr = yes"; 'README.txt'=$readme; 'LICENSE.txt'=$licence; 'Play Ninja Assault.cmd'='start "" /D "%~dp0" "%~dp0flycast.exe" "%~dp0roms\ninjaslt.zip"'}
         $archive = Archive 'portable-valid.zip' $entries
         Check 'exact portable Ninja archive accepted' (@(Find-PcArchiveFault $archive $files).Count -eq 0)
@@ -138,7 +138,7 @@ try {
         $archive = Archive 'portable-production-templates.zip' $production
         Check 'production README config and launcher satisfy portable checks' (@(Find-PcArchiveFault $archive $files).Count -eq 0)
         Check 'packaged README explicitly marks implementation in progress' ($generatedReadme.Contains('Implementation in progress.'))
-        $entries['README.txt'] = $readme.Replace('Ninja Assault VR','Confidential Mission VR')
+        $entries['README.txt'] = $readme.Replace('Ninja Assault - VR4ALL','Confidential Mission VR')
         $archive = Archive 'portable-wrong-readme.zip' $entries
         Check 'stale CM README rejected' (@(Find-PcArchiveFault $archive $files).Count -gt 0)
         $entries['README.txt'] = $readme + ' roms\lupinshoo\gds-0018.chd'

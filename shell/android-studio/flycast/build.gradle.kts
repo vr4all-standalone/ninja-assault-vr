@@ -13,7 +13,7 @@ fun gitVersionName(): String {
 
 // hotd2-vr: Ninja Assault VR's own version. The vr build's versionName is "<hubVersion>-g<commit>"
 // (set in androidComponents below); the standalone release starts at versionCode 1.
-val hubVersion = "1.0.6"
+val hubVersion = "1.0.7"
 
 fun gitShortHash(): String {
     return providers.exec {
@@ -49,7 +49,7 @@ android {
         applicationId = "com.flycast.emulator"
         minSdk = 29     // hotd2-vr: Quest only (the OpenXR loader needs 24+)
         targetSdk = 36
-        versionCode = 9
+        versionCode = 8
         versionName = gitVersionName()
         vectorDrawables.useSupportLibrary = true
 

@@ -1,5 +1,5 @@
 <#
-  Packages Ninja Assault VR builds for the Quest and PC (implementation remains in progress)
+  Packages Ninja Assault - VR4ALL builds for the Quest and PC (implementation remains in progress)
   in dist\ (packaging checks do not establish gameplay or headset validation):
 
     ninja-assault-vr-quest.apk   the Quest app (Quest 3, 3S, 2, Pro)
@@ -11,7 +11,7 @@
   is made on the spot. Both are checked for that (the names in their file lists: cartridge ROMs, BIOS, discs, keys,
   rips, frame grabs, models made from a game), and the APK for its signer: signed with the public
   debug key (no release key, see make-release-key.ps1) it is refused, since anyone could sign an
-  "update" of the app with that key. The APK is also checked for being Ninja Assault VR
+  "update" of the app with that key. The APK is also checked for being Ninja Assault - VR4ALL
   (its package, version and label, and its start screen the only entry in the headset's library),
   and the zip for holding exactly its files, with a README.txt that names no other game.
 
@@ -29,7 +29,7 @@
   (core\deps\cgltf\LICENSE) in it; -CheckOnly checks that too.
 
   A release is built from a commit, the one its published source is: the working tree must be
-  clean (the gamesdk submodule's local change aside), and the APK's versionName (1.0.6-g<commit>),
+  clean (the gamesdk submodule's local change aside), and the APK's versionName (1.0.7-g<commit>),
   its libflycast.so and flycast.exe must all name HEAD (a -SkipBuild after a new commit fails
   that). -AllowDebugKey test builds skip both checks.
 
@@ -51,8 +51,8 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 # The app: its application ID, label and version (shell\android-studio\flycast\build.gradle.kts and
 # src\vr\AndroidManifest.xml), its library entry, and the PC zip's start script (hotd2-vr\assets).
 $appId = 'com.vrlightgunhub.ninjaassault'
-$appLabel = 'Ninja Assault VR'
-$appVersion = '1.0.6'
+$appLabel = 'Ninja Assault - VR4ALL'
+$appVersion = '1.0.7'
 $appLauncher = 'com.flycast.emulator.NinjaStartActivity'
 $playCmd = 'Play Ninja Assault.cmd'
 
@@ -222,7 +222,7 @@ function Find-AppIdentityFault([string[]]$badgingLines, [string[]]$manifestTree,
     $badging = $badgingLines | Where-Object { $_ -match '^package:' } | Select-Object -First 1
     $wantVersion = [regex]::Escape("$appVersion-g") + $(if ($testBuild) { '[0-9a-f]+' } else { [regex]::Escape($shortHash) })
     if ($badging -notmatch "^package: name='$([regex]::Escape($appId))'") { "the package is not $appId" }
-    if ($badging -notmatch "versionCode='7'") { 'the versionCode is not 7' }
+    if ($badging -notmatch "versionCode='8'") { 'the versionCode is not 8' }
     if ($badging -notmatch "versionName='$wantVersion'") {
         "the versionName is not $appVersion-g$(if ($testBuild) { '<commit>' } else { $shortHash })"
     }
@@ -418,7 +418,7 @@ rend.NativeDepthInterpolation = yes
 vr.Xr = yes
 '@
 $readme = @'
-Ninja Assault VR, experimental PC development build
+Ninja Assault - VR4ALL, experimental PC development build
 
 Implementation in progress. World NJA2 Ver.A is the initial research target. The inherited
 menus, gun choices and controller features are being adapted to measured Ninja Assault state.
